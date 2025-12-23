@@ -20,7 +20,9 @@ Then select "Discover" and enter `mrleeio/claude-plugins`.
 
 ## Available Plugins
 
-*No plugins yet. Check back soon!*
+| Plugin | Description |
+|--------|-------------|
+| [conventional-commits](plugins/conventional-commits) | Create git commits following Conventional Commits v1.0.0 without AI attribution |
 
 ## Adding a Plugin
 

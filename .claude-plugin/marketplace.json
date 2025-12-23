@@ -1,7 +1,23 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "mrleeio-claude-plugins",
   "description": "Personal Claude Code plugins marketplace by mrleeio",
-  "homepage": "https://github.com/mrleeio/claude-plugins",
-  "author": "mrleeio",
-  "license": "MIT"
+  "owner": {
+    "name": "mrleeio",
+    "email": "michael@mrlee.io"
+  },
+  "plugins": [
+    {
+      "name": "conventional-commits",
+      "description": "Create git commits following Conventional Commits v1.0.0 without AI attribution",
+      "version": "1.0.0",
+      "author": {
+        "name": "mrleeio",
+        "url": "https://github.com/mrleeio"
+      },
+      "source": "./plugins/conventional-commits",
+      "category": "productivity",
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/conventional-commits"
+    }
+  ]
 }
