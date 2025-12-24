@@ -50,6 +50,18 @@
           }
         }
       }
+    },
+    {
+      "name": "ruby-binstubs",
+      "description": "Ensures Claude uses binstubs (bin/*) instead of bundle exec in Ruby projects",
+      "version": "1.0.0",
+      "author": {
+        "name": "mrleeio",
+        "url": "https://github.com/mrleeio"
+      },
+      "source": "./plugins/ruby-binstubs",
+      "category": "development",
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/ruby-binstubs"
     }
   ]
 }
