@@ -1,0 +1,32 @@
+{
+  "name": "ruby-lsp",
+  "version": "1.0.0",
+  "description": "Ruby language server for code intelligence",
+  "author": {
+    "name": "mrleeio",
+    "url": "https://github.com/mrleeio"
+  },
+  "homepage": "https://github.com/mrleeio/claude-plugins",
+  "license": "MIT",
+  "keywords": ["ruby", "lsp", "language-server"],
+  "lspServers": {
+    "ruby": {
+      "command": "ruby-lsp",
+      "extensionToLanguage": {
+        ".rb": "ruby",
+        ".rbi": "ruby",
+        ".rake": "ruby",
+        ".gemspec": "ruby",
+        ".ru": "ruby",
+        ".erb": "erb",
+        ".builder": "ruby",
+        ".jbuilder": "ruby",
+        ".rabl": "ruby",
+        ".thor": "ruby",
+        ".podspec": "ruby",
+        ".irbrc": "ruby",
+        ".pryrc": "ruby"
+      }
+    }
+  }
+}

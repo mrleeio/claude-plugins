@@ -18,6 +18,38 @@
       "source": "./plugins/conventional-commits",
       "category": "productivity",
       "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/conventional-commits"
+    },
+    {
+      "name": "ruby-lsp",
+      "description": "Ruby language server for code intelligence",
+      "version": "1.0.0",
+      "author": {
+        "name": "mrleeio",
+        "url": "https://github.com/mrleeio"
+      },
+      "source": "./plugins/ruby-lsp",
+      "category": "development",
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/ruby-lsp",
+      "lspServers": {
+        "ruby": {
+          "command": "ruby-lsp",
+          "extensionToLanguage": {
+            ".rb": "ruby",
+            ".rbi": "ruby",
+            ".rake": "ruby",
+            ".gemspec": "ruby",
+            ".ru": "ruby",
+            ".erb": "erb",
+            ".builder": "ruby",
+            ".jbuilder": "ruby",
+            ".rabl": "ruby",
+            ".thor": "ruby",
+            ".podspec": "ruby",
+            ".irbrc": "ruby",
+            ".pryrc": "ruby"
+          }
+        }
+      }
     }
   ]
 }
