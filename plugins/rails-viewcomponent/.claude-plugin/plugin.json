@@ -1,0 +1,12 @@
+{
+  "name": "rails-viewcomponent",
+  "version": "1.0.0",
+  "description": "ViewComponent conventions and API reference for building reusable Rails components",
+  "author": {
+    "name": "mrleeio",
+    "url": "https://github.com/mrleeio"
+  },
+  "homepage": "https://github.com/mrleeio/claude-plugins",
+  "license": "MIT",
+  "keywords": ["rails", "viewcomponent", "components", "frontend"]
+}

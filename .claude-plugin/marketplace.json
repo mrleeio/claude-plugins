@@ -74,6 +74,18 @@
       "source": "./plugins/rails-hotwire",
       "category": "development",
       "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/rails-hotwire"
+    },
+    {
+      "name": "rails-viewcomponent",
+      "description": "ViewComponent conventions and API reference for building reusable Rails UI components",
+      "version": "1.0.0",
+      "author": {
+        "name": "mrleeio",
+        "url": "https://github.com/mrleeio"
+      },
+      "source": "./plugins/rails-viewcomponent",
+      "category": "development",
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/rails-viewcomponent"
     }
   ]
 }
