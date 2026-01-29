@@ -1,0 +1,12 @@
+{
+  "name": "rails-conventions",
+  "version": "2.0.0",
+  "description": "Comprehensive Rails conventions plugin covering controllers, models, views, policies, jobs, migrations, Stimulus, testing, Hotwire (Turbo/Stimulus), ViewComponent, and 37signals-inspired patterns for CurrentAttributes, events, notifications, state resources, and multi-tenancy",
+  "author": {
+    "name": "mrleeio",
+    "url": "https://github.com/mrleeio"
+  },
+  "homepage": "https://github.com/mrleeio/claude-plugins",
+  "license": "MIT",
+  "keywords": ["rails", "conventions", "controllers", "models", "views", "policies", "jobs", "migrations", "stimulus", "testing", "rspec", "hotwire", "turbo", "turbo-frames", "turbo-streams", "viewcomponent", "components", "multi-tenancy", "current-attributes", "events", "notifications", "state-machines", "37signals", "basecamp"]
+}

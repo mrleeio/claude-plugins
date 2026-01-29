@@ -1,0 +1,12 @@
+{
+  "name": "ruby-conventions",
+  "version": "1.0.0",
+  "description": "Ruby coding conventions plugin covering binstubs, style guide, testing (RSpec/Minitest), gem conventions, and class design patterns",
+  "author": {
+    "name": "mrleeio",
+    "url": "https://github.com/mrleeio"
+  },
+  "homepage": "https://github.com/mrleeio/claude-plugins",
+  "license": "MIT",
+  "keywords": ["ruby", "binstubs", "bundler", "rspec", "minitest", "conventions", "style-guide", "testing", "gems"]
+}
