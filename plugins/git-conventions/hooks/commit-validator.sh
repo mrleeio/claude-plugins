@@ -46,6 +46,21 @@ if ! echo "$command" | grep -qE '\s+-m\s|\s+--message'; then
   exit 0
 fi
 
+# Check for AI attribution in the raw command (catches HEREDOC style too)
+if echo "$command" | grep -qiE 'co-authored-by:.*claude|generated.*claude|claude.*code|anthropic'; then
+  cat >&2 << EOF
+BLOCKED: Commit message contains AI attribution
+
+Conventional commits in this project should NOT include:
+  - Co-Authored-By tags for AI/Claude
+  - "Generated with Claude Code" or similar
+  - References to AI assistance
+
+Please remove AI attribution from the commit message.
+EOF
+  exit 2
+fi
+
 # Extract commit message from -m "message" or -m 'message' or --message="message"
 # Handle HEREDOC style: -m "$(cat <<'EOF' ... EOF)"
 message=""
