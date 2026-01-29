@@ -1,6 +1,6 @@
 {
   "name": "ruby-conventions",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Ruby coding conventions plugin covering binstubs, style guide, testing (RSpec/Minitest), gem conventions, and class design patterns",
   "author": {
     "name": "mrleeio",

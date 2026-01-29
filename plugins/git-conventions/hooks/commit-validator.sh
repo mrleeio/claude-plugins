@@ -2,55 +2,37 @@
 # PreToolUse hook: Validate git commit messages follow Conventional Commits format
 # Blocks commits with invalid message format and provides guidance
 
-# Debug log (disable after debugging)
-DEBUG_LOG="/tmp/claude-commit-validator-debug.log"
-debug() {
-  echo "[$(date '+%H:%M:%S')] $1" >> "$DEBUG_LOG" 2>/dev/null
-}
-
 # Fail-safe: ANY unhandled error exits 0 (allow)
-trap 'debug "TRAP: exiting 0 due to error"; exit 0' ERR
-
-debug "=== HOOK START ==="
+trap 'exit 0' ERR
 
 # Check if jq is available
 if ! command -v jq &>/dev/null; then
-  debug "ERROR: jq not found in PATH"
   exit 0
 fi
 
 # Read JSON input from stdin
 input=$(cat)
-debug "INPUT length: ${#input}"
 
 # Handle empty input gracefully
 if [[ -z "$input" ]]; then
-  debug "INPUT: empty, exiting 0"
   exit 0
 fi
 
-# Parse JSON with error capture
-tool_name=$(echo "$input" | jq -r '.tool_name' 2>&1)
-jq_exit=$?
-debug "jq tool_name exit=$jq_exit result='$tool_name'"
-
-if [[ $jq_exit -ne 0 || -z "$tool_name" || "$tool_name" == "null" ]]; then
-  debug "PARSE FAILED: tool_name, exiting 0"
+# Parse JSON with error checking
+tool_name=$(echo "$input" | jq -r '.tool_name' 2>/dev/null)
+if [[ $? -ne 0 || -z "$tool_name" || "$tool_name" == "null" ]]; then
   exit 0
 fi
 
 command=$(echo "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)
-debug "command='${command:0:50}...'"
 
 # Only process Bash tool
 if [[ "$tool_name" != "Bash" ]]; then
-  debug "NOT BASH: $tool_name, exiting 0"
   exit 0
 fi
 
 # Exit early if no command
 if [[ -z "$command" ]]; then
-  debug "NO COMMAND, exiting 0"
   exit 0
 fi
 
