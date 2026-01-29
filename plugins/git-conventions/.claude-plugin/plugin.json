@@ -1,6 +1,6 @@
 {
   "name": "git-conventions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Git conventions and best practices including Conventional Commits standard (v1.0.0)",
   "keywords": ["git", "commits", "conventional-commits", "commit-message"],
   "author": {
