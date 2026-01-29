@@ -8,84 +8,40 @@
   },
   "plugins": [
     {
-      "name": "conventional-commits",
-      "description": "Create git commits following Conventional Commits v1.0.0 without AI attribution",
+      "name": "git-conventions",
+      "description": "Git conventions and best practices including Conventional Commits standard (v1.0.0)",
       "version": "1.0.0",
       "author": {
         "name": "mrleeio",
         "url": "https://github.com/mrleeio"
       },
-      "source": "./plugins/conventional-commits",
+      "source": "./plugins/git-conventions",
       "category": "productivity",
-      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/conventional-commits"
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/git-conventions"
     },
     {
-      "name": "ruby-lsp",
-      "description": "Ruby language server for code intelligence",
+      "name": "rails-conventions",
+      "description": "Comprehensive Rails conventions plugin covering controllers, models, views, policies, jobs, migrations, Stimulus, testing, Hotwire (Turbo/Stimulus), ViewComponent, and 37signals-inspired patterns",
+      "version": "2.0.0",
+      "author": {
+        "name": "mrleeio",
+        "url": "https://github.com/mrleeio"
+      },
+      "source": "./plugins/rails-conventions",
+      "category": "development",
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/rails-conventions"
+    },
+    {
+      "name": "ruby-conventions",
+      "description": "Ruby coding conventions plugin covering binstubs, style guide, testing (RSpec/Minitest), gem conventions, and class design patterns",
       "version": "1.0.0",
       "author": {
         "name": "mrleeio",
         "url": "https://github.com/mrleeio"
       },
-      "source": "./plugins/ruby-lsp",
+      "source": "./plugins/ruby-conventions",
       "category": "development",
-      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/ruby-lsp",
-      "lspServers": {
-        "ruby": {
-          "command": "ruby-lsp",
-          "extensionToLanguage": {
-            ".rb": "ruby",
-            ".rbi": "ruby",
-            ".rake": "ruby",
-            ".gemspec": "ruby",
-            ".ru": "ruby",
-            ".erb": "erb",
-            ".builder": "ruby",
-            ".jbuilder": "ruby",
-            ".rabl": "ruby",
-            ".thor": "ruby",
-            ".podspec": "ruby",
-            ".irbrc": "ruby",
-            ".pryrc": "ruby"
-          }
-        }
-      }
-    },
-    {
-      "name": "ruby-binstubs",
-      "description": "Ensures Claude uses binstubs (bin/*) instead of bundle exec in Ruby projects",
-      "version": "1.0.0",
-      "author": {
-        "name": "mrleeio",
-        "url": "https://github.com/mrleeio"
-      },
-      "source": "./plugins/ruby-binstubs",
-      "category": "development",
-      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/ruby-binstubs"
-    },
-    {
-      "name": "rails-hotwire",
-      "description": "Hotwire conventions and API reference for Rails frontend (Turbo + Stimulus)",
-      "version": "1.0.0",
-      "author": {
-        "name": "mrleeio",
-        "url": "https://github.com/mrleeio"
-      },
-      "source": "./plugins/rails-hotwire",
-      "category": "development",
-      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/rails-hotwire"
-    },
-    {
-      "name": "rails-viewcomponent",
-      "description": "ViewComponent conventions and API reference for building reusable Rails UI components",
-      "version": "1.0.0",
-      "author": {
-        "name": "mrleeio",
-        "url": "https://github.com/mrleeio"
-      },
-      "source": "./plugins/rails-viewcomponent",
-      "category": "development",
-      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/rails-viewcomponent"
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/ruby-conventions"
     }
   ]
 }

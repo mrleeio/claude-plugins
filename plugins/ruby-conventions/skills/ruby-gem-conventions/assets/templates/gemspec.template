@@ -1,0 +1,52 @@
+# frozen_string_literal: true
+
+require_relative "lib/GEM_NAME/version"
+
+Gem::Specification.new do |spec|
+  # == IDENTITY ==
+  spec.name    = "GEM_NAME"
+  spec.version = GemName::VERSION
+  spec.authors = ["Your Name"]
+  spec.email   = ["your.email@example.com"]
+
+  # == DESCRIPTION ==
+  spec.summary     = "Short summary of the gem (max 140 characters)"
+  spec.description = "Longer description of what the gem does and why it's useful"
+  spec.homepage    = "https://github.com/USERNAME/GEM_NAME"
+  spec.license     = "MIT"
+
+  # == REQUIREMENTS ==
+  spec.required_ruby_version = ">= 3.0"
+
+  # == FILES ==
+  spec.files = Dir.chdir(__dir__) do
+    `git ls-files -z`.split("\x0").reject do |f|
+      f.match?(%r{\A(?:bin|test|spec|features)/}) ||
+        f.match?(%r{\.gem\z}) ||
+        f.start_with?(".")
+    end
+  end
+
+  spec.bindir        = "exe"
+  spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
+  spec.require_paths = ["lib"]
+
+  # == DEPENDENCIES ==
+  # Runtime dependencies (installed with gem)
+  # spec.add_dependency "activesupport", ">= 6.0"
+
+  # Development dependencies (installed via bundle install only)
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "rubocop", "~> 1.0"
+
+  # == METADATA ==
+  spec.metadata = {
+    "homepage_uri"          => spec.homepage,
+    "source_code_uri"       => "https://github.com/USERNAME/GEM_NAME",
+    "changelog_uri"         => "https://github.com/USERNAME/GEM_NAME/blob/main/CHANGELOG.md",
+    "bug_tracker_uri"       => "https://github.com/USERNAME/GEM_NAME/issues",
+    "documentation_uri"     => "https://rubydoc.info/gems/GEM_NAME",
+    "rubygems_mfa_required" => "true"
+  }
+end
