@@ -5,7 +5,44 @@ description: Use when building ViewComponents with slots, previews, or collectio
 
 # ViewComponent Conventions for Rails
 
-ViewComponent is a framework for building reusable, testable view components in Rails. Components are Ruby objects that encapsulate view logic and templates.
+Use ViewComponents instead of partials for reusable UI with explicit interfaces. Test components directly with `render_inline`.
+
+## Core Rules
+
+```ruby
+# WRONG - partial with logic scattered in views and helpers
+# app/views/shared/_message.html.erb
+<div class="message message--<%= type || :info %>">
+  <%= message_icon(type) %>
+  <%= text %>
+</div>
+
+# app/helpers/messages_helper.rb
+def message_icon(type)
+  case type
+  when :error then "X"
+  when :success then "check"
+  else "info"
+  end
+end
+
+# RIGHT - ViewComponent with encapsulated logic
+# app/components/message_component.rb
+class MessageComponent < ViewComponent::Base
+  def initialize(text:, type: :info)
+    @text = text
+    @type = type
+  end
+
+  def icon
+    case @type
+    when :error then "X"
+    when :success then "check"
+    else "info"
+    end
+  end
+end
+```
 
 ## Core Philosophy
 
@@ -267,6 +304,17 @@ end
 # Render multiple components efficiently
 <%= render(ProductComponent.with_collection(@products)) %>
 ```
+
+## Common Mistakes
+
+1. **Using partials with view logic**: Partials with conditionals and helper methods should be ViewComponents instead. Components provide explicit interfaces and are testable in isolation
+2. **Implicit dependencies**: Passing data via instance variables from the view instead of through the component initializer. Always make dependencies explicit via constructor arguments
+3. **Missing `render?` method**: Rendering empty components when the data is absent. Override `render?` to return `false` when the component should not render
+4. **Testing through integration tests**: Component logic should be tested with `render_inline` in unit tests, not through slow browser-based integration tests
+5. **Forgetting to preview all variants**: Every visual state of a component should have a preview method for documentation and visual regression testing
+6. **Not using slots for composition**: Deeply nesting components by passing them as initializer arguments. Use `renders_one` and `renders_many` slots instead
+7. **Putting logic in templates**: Keep conditional logic, formatting, and data transformation in the Ruby class. Templates should only do presentation
+8. **Not using `with_collection`**: Rendering components in a loop with `.each` is slower than using `with_collection` which batches rendering
 
 ## Best Practices
 

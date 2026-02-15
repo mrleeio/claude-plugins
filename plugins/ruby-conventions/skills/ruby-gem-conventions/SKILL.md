@@ -5,7 +5,44 @@ description: This skill should be used when editing Gemfile, Gemfile.lock, or ge
 
 # Ruby Gem Conventions
 
-Conventions for managing Ruby dependencies with Bundler.
+Always use pessimistic version constraints (`~>`). Always organize gems by environment group. Always alphabetize gems within groups.
+
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Use pessimistic constraints (`~> 1.2`) | Leave gems unconstrained |
+| Organize gems by environment group | Mix production and test gems |
+| Alphabetize gems within groups | Random gem ordering |
+| Use `require: false` for CLI tools | Auto-require tools like rubocop |
+| Update gems one at a time | `bundle update` with no arguments |
+| Run tests after each gem update | Batch update multiple gems |
+| Use `bundle binstubs` for executables | Use `bundle exec` when binstub exists |
+| Run `bundle audit` regularly | Ignore security advisories |
+| Lock framework gems to minor version | Use loose constraints on Rails |
+
+## Core Rules
+
+```ruby
+# WRONG - no version constraints, unorganized, not alphabetized
+gem "rails"
+gem "sidekiq"
+gem "rspec-rails"
+gem "pg"
+gem "rubocop"
+gem "puma"
+
+# RIGHT - constrained, grouped, alphabetized
+gem "pg", "~> 1.5"
+gem "puma", "~> 6.0"
+gem "rails", "~> 7.1.0"
+gem "sidekiq", "~> 7.0"
+
+group :development, :test do
+  gem "rspec-rails", "~> 6.0"
+  gem "rubocop", "~> 1.0", require: false
+end
+```
 
 ## Gemfile Organization
 
@@ -26,10 +63,10 @@ gem "puma"
 gem "redis"
 
 # Asset pipeline / Frontend
-gem "sprockets-rails"
 gem "importmap-rails"
-gem "turbo-rails"
+gem "sprockets-rails"
 gem "stimulus-rails"
+gem "turbo-rails"
 
 # Background jobs
 gem "sidekiq"
@@ -49,9 +86,9 @@ group :development, :test do
   gem "pry-rails"
 
   # Testing
-  gem "rspec-rails"
   gem "factory_bot_rails"
   gem "faker"
+  gem "rspec-rails"
 
   # Code quality
   gem "rubocop", require: false
@@ -60,47 +97,23 @@ group :development, :test do
 end
 
 group :development do
-  # Development tools
-  gem "web-console"
-  gem "rack-mini-profiler"
-
-  # Code reloading
-  gem "listen"
-
-  # Error pages
   gem "better_errors"
   gem "binding_of_caller"
+  gem "listen"
+  gem "rack-mini-profiler"
+  gem "web-console"
 end
 
 group :test do
-  # System testing
   gem "capybara"
   gem "selenium-webdriver"
-
-  # Coverage
   gem "simplecov", require: false
-
-  # Time manipulation
   gem "timecop"
 end
 
 group :production do
   # Production-only gems
 end
-```
-
-### Alphabetize Within Groups
-
-```ruby
-# Good
-gem "devise"
-gem "omniauth"
-gem "pundit"
-
-# Bad
-gem "pundit"
-gem "devise"
-gem "omniauth"
 ```
 
 ## Version Constraints
@@ -152,7 +165,7 @@ gem "some-beta-gem", "~> 0.9.1"
 
 ### require: false
 
-Use for gems that are invoked directly, not loaded automatically:
+Use for gems invoked directly, not loaded automatically:
 
 ```ruby
 # CLI tools
@@ -160,11 +173,8 @@ gem "rubocop", require: false
 gem "brakeman", require: false
 gem "bundler-audit", require: false
 
-# Loaded conditionally
-gem "pry-rails", require: false  # if using debugger
-
 # Loaded by Rake tasks only
-gem "rspec-rails", require: false  # loaded by spec_helper
+gem "rspec-rails", require: false
 ```
 
 ### Git Sources
@@ -178,32 +188,12 @@ gem "gem", github: "user/repo", branch: "main"
 
 # With tag
 gem "gem", github: "user/repo", tag: "v1.0.0"
-
-# Full git URL
-gem "gem", git: "https://github.com/user/repo.git"
-```
-
-### Path Sources
-
-```ruby
-# Local development
-gem "my-engine", path: "../my-engine"
-
-# Conditional (development only)
-if ENV["LOCAL_GEMS"]
-  gem "my-gem", path: "../my-gem"
-else
-  gem "my-gem", "~> 1.0"
-end
 ```
 
 ### Platforms
 
 ```ruby
-# Platform-specific gems
 gem "wdm", ">= 0.1.0", platforms: [:mingw, :mswin, :x64_mingw]
-
-# JRuby
 gem "jdbc-postgres", platforms: :jruby
 gem "pg", platforms: :ruby
 ```
@@ -250,127 +240,36 @@ Gem::Specification.new do |spec|
 end
 ```
 
-### Metadata
-
-```ruby
-spec.metadata = {
-  "homepage_uri"      => spec.homepage,
-  "source_code_uri"   => "https://github.com/you/my_gem",
-  "changelog_uri"     => "https://github.com/you/my_gem/blob/main/CHANGELOG.md",
-  "bug_tracker_uri"   => "https://github.com/you/my_gem/issues",
-  "documentation_uri" => "https://rubydoc.info/gems/my_gem"
-}
-```
-
 ## Bundle Commands
 
 ### Essential Commands
 
 ```bash
-# Install dependencies
-bundle install
-
-# Update all gems
-bundle update
-
-# Update specific gem
-bundle update sidekiq
-
-# Show outdated gems
-bundle outdated
-
-# Show gem info
-bundle info sidekiq
-
-# Add gem
-bundle add sidekiq
-
-# Remove gem (edit Gemfile, then)
-bundle install
+bundle install          # Install dependencies
+bundle update sidekiq   # Update specific gem
+bundle outdated         # Show outdated gems
+bundle info sidekiq     # Show gem info
+bundle add sidekiq      # Add gem
+bundle audit check --update  # Check for vulnerabilities
 ```
-
-### Lock File
-
-```bash
-# Check for security vulnerabilities
-bundle audit
-
-# Update only Gemfile.lock
-bundle lock
-
-# Update lock for specific platform
-bundle lock --add-platform x86_64-linux
-```
-
-### Binstubs
-
-```bash
-# Create binstubs
-bundle binstubs rspec-core
-bundle binstubs rubocop
-
-# Create all binstubs
-bundle binstubs --all
-
-# Use binstubs
-bin/rspec
-bin/rubocop
-```
-
-### Bundler Config
-
-```bash
-# Set config
-bundle config set path 'vendor/bundle'
-bundle config set without 'development test'
-
-# Show config
-bundle config list
-
-# Unset config
-bundle config unset path
-```
-
-## Dependency Management
 
 ### Updating Safely
 
-1. Check what will change:
-   ```bash
-   bundle outdated
-   ```
-
-2. Update one gem at a time:
-   ```bash
-   bundle update sidekiq --conservative
-   ```
-
+1. Check what will change: `bundle outdated`
+2. Update one gem at a time: `bundle update sidekiq --conservative`
 3. Run tests after each update
-
 4. Commit Gemfile.lock separately for each gem
 
-### Security Auditing
+## Common Mistakes
 
-```bash
-# Install bundler-audit
-gem install bundler-audit
-
-# Check for vulnerabilities
-bundle audit check --update
-
-# In CI
-bundle audit check --update || exit 1
-```
-
-## Summary
-
-1. Organize Gemfile by environment groups
-2. Alphabetize gems within groups
-3. Use pessimistic version constraints (`~>`)
-4. Use `require: false` for CLI tools
-5. Keep dependencies minimal
-6. Update gems one at a time with tests
-7. Run security audits regularly
+1. **No version constraints**: Leaving gems unconstrained means `bundle update` can pull breaking changes. Always use `~>` at minimum
+2. **Using `>=` without upper bound**: `gem "rails", ">= 7.0"` allows Rails 8.0 which may break your app. Use `~> 7.1.0` instead
+3. **Auto-requiring CLI tools**: Gems like `rubocop` and `brakeman` should use `require: false` to avoid loading them in every process
+4. **Bulk updating**: Running `bundle update` without arguments updates everything at once. Update one gem at a time and test between each
+5. **Unalphabetized gems**: Random ordering makes it hard to find gems and leads to duplicates. Alphabetize within each group
+6. **Missing groups**: Putting test gems in the default group loads them in production. Always use `:development`, `:test`, or `:production` groups
+7. **Ignoring security audits**: Run `bundle audit` in CI to catch known vulnerabilities in dependencies
+8. **Committing Gemfile without Gemfile.lock**: Both files must be committed together for reproducible builds
 
 ## See Also
 

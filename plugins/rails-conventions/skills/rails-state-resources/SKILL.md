@@ -7,6 +7,18 @@ description: Use when modeling state changes as RESTful resources (open/close, p
 
 Instead of adding custom actions like `post :close` or `patch :archive`, model state transitions as creating or destroying a sub-resource. This keeps controllers RESTful and thin.
 
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Model state as a sub-resource (`resource :closure`) | Add custom actions (`post :close`) |
+| Use `create` to enter state, `destroy` to exit | Use `update` to toggle boolean columns |
+| Store who/when in the join record | Only store a boolean `closed` column |
+| Use `joins(:closure)` / `where.missing(:closure)` for scoping | Use `where(closed: true)` |
+| Put state logic in a model concern | Put state logic in the controller |
+| Wrap state change + event in a transaction | Create event and state change separately |
+| Use singular `resource` for 1:1 state relationships | Use `resources` (plural) for state toggles |
+
 ## The Pattern
 
 | State Change | Sub-Resource | Create | Destroy |
@@ -94,7 +106,7 @@ end
 
 ## Model Implementation
 
-The model uses the Closeable concern (see `rails-model-conventions` skill):
+The model uses a concern for the state behavior:
 
 ```ruby
 # app/models/card/closeable.rb
@@ -179,22 +191,16 @@ Toggle buttons that switch between create/destroy:
 
 ## Why This Pattern?
 
-### Instead of custom actions:
-
 ```ruby
-# Avoid this
+# WRONG - custom actions
 resources :cards do
   post :close, on: :member
   post :reopen, on: :member
   post :pin, on: :member
   delete :unpin, on: :member
 end
-```
 
-### Use sub-resources:
-
-```ruby
-# Do this
+# RIGHT - sub-resources
 resources :cards do
   resource :closure
   resource :pin
@@ -225,6 +231,17 @@ class Card < ApplicationRecord
   scope :postponed, -> { joins(:not_now) }
 end
 ```
+
+## Common Mistakes
+
+1. **Using boolean columns**: A `closed` boolean loses who closed it and when. Use a join record instead
+2. **Custom controller actions**: `post :close` and `post :reopen` bypass REST conventions. Use `resource :closure` with `create`/`destroy`
+3. **Forgetting uniqueness constraint**: The join table should have a unique index on the parent ID to prevent duplicate state records
+4. **Not wrapping in transactions**: State changes and their associated events must be in the same transaction for consistency
+5. **Missing guard clauses**: Don't close an already-closed card. Check `closed?` before creating the closure
+6. **Using `resources` instead of `resource`**: State toggles are 1:1 relationships. Use singular `resource` (no index action, no ID in URL)
+7. **Putting logic in controllers**: The controller should just call `@card.close`. All state logic belongs in the model concern
+8. **Not providing scopes**: Always add `scope :closed` and `scope :open` to make querying easy. Use `joins` and `where.missing`
 
 ## See Also
 

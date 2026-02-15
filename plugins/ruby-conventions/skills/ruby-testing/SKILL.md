@@ -5,16 +5,50 @@ description: This skill should be used when writing or editing Ruby test files. 
 
 # Ruby Testing Conventions
 
-Conventions for writing clear, maintainable tests in RSpec and Minitest.
+NEVER test mocked behavior. ALWAYS use Arrange-Act-Assert. Test one behavior per test.
 
-## General Principles
+## Quick Reference
 
-### Test Organization
+| Do | Don't |
+|----|-------|
+| Structure tests with Arrange-Act-Assert | Mix setup, action, and assertions |
+| Test one behavior per test | Assert multiple unrelated things |
+| Test public interface behavior | Test private methods directly |
+| Use descriptive test names that document behavior | Name tests `test1` or `it works` |
+| Mock external services (APIs, payment processors) | Mock the object under test |
+| Use factories or fixtures for test data | Build complex objects inline |
+| Use `describe`/`context` to organize (RSpec) | Put all tests in flat structure |
+| Start `context` blocks with "when" or "with" | Use vague context descriptions |
+| Use `let` for lazy-evaluated test data (RSpec) | Use instance variables in `before` blocks |
+| Test edge cases and error conditions | Only test the happy path |
 
-1. **Arrange-Act-Assert (AAA)** - Structure each test clearly
-2. **One assertion per test** - Test one behavior at a time
-3. **Descriptive names** - Tests should document behavior
-4. **No logic in tests** - Avoid conditionals and loops
+## Core Rules
+
+```ruby
+# WRONG - testing mocked behavior, no structure, multiple assertions
+it "processes the order" do
+  allow(order).to receive(:total).and_return(100)
+  allow(order).to receive(:process).and_return(true)
+  result = order.process
+  expect(result).to be true
+  expect(order).to have_received(:process)
+  expect(order.total).to eq(100)
+end
+
+# RIGHT - testing real behavior, AAA structure, one assertion
+it "calculates total from line items" do
+  # Arrange
+  order = Order.new(line_items: [LineItem.new(price: 50), LineItem.new(price: 30)])
+
+  # Act
+  total = order.total
+
+  # Assert
+  expect(total).to eq(80)
+end
+```
+
+## Test Organization
 
 ### What to Test
 
@@ -35,10 +69,11 @@ See `references/rspec.md` for complete API reference.
 
 ### Describe Blocks
 
+Use `describe` for the class/method being tested:
+
 ```ruby
-# Class or module
 RSpec.describe User do
-  # Instance method
+  # Instance method - prefix with #
   describe "#full_name" do
     it "concatenates first and last name" do
       user = User.new(first_name: "John", last_name: "Doe")
@@ -46,7 +81,7 @@ RSpec.describe User do
     end
   end
 
-  # Class method
+  # Class method - prefix with .
   describe ".find_by_email" do
     it "returns user with matching email" do
       user = User.create!(email: "test@example.com")
@@ -58,9 +93,14 @@ end
 
 ### Context Blocks
 
-Use `context` for different scenarios:
+Use `context` for different scenarios. Always start with "when" or "with":
 
 ```ruby
+# WRONG
+context "new order" do; end
+context "paid" do; end
+
+# RIGHT
 describe "#status" do
   context "when order is new" do
     it "returns pending" do
@@ -75,25 +115,18 @@ describe "#status" do
       expect(order.status).to eq(:confirmed)
     end
   end
-
-  context "when order is shipped" do
-    it "returns shipped" do
-      order = Order.new(shipped_at: Time.current)
-      expect(order.status).to eq(:shipped)
-    end
-  end
 end
 ```
 
 ### Let and Subject
 
+Use `let` for lazy-evaluated, memoized test data. Use `subject` for the primary object under test:
+
 ```ruby
 RSpec.describe Order do
-  # Lazy-evaluated, memoized
   let(:user) { User.create!(email: "test@example.com") }
   let(:order) { Order.new(user: user, total: 100) }
 
-  # For the primary object under test
   subject(:order) { Order.new(user: user) }
 
   describe "#valid?" do
@@ -106,6 +139,8 @@ end
 ```
 
 ### Shared Examples
+
+Extract common behavior checks into shared examples:
 
 ```ruby
 # Define
@@ -154,10 +189,6 @@ class OrderTest < ActiveSupport::TestCase
   setup do
     @user = users(:alice)
     @order = Order.new(user: @user)
-  end
-
-  teardown do
-    # Cleanup if needed
   end
 
   test "calculates total with tax" do
@@ -241,7 +272,6 @@ bob:
 ```
 
 ```ruby
-# Use in tests
 test "admin can delete users" do
   admin = users(:alice)
   member = users(:bob)
@@ -267,22 +297,14 @@ end
 ### RSpec Mocks
 
 ```ruby
-# Stub method
+# WRONG - mocking the object under test
+allow(user).to receive(:full_name).and_return("John Doe")
+expect(user.full_name).to eq("John Doe")  # Tests nothing!
+
+# RIGHT - mocking external dependency
 allow(ExternalApi).to receive(:fetch).and_return({ data: [] })
-
-# Verify call
-expect(mailer).to receive(:deliver_later)
-
-# Partial double
-allow(user).to receive(:admin?).and_return(true)
-```
-
-### Minitest Mocks
-
-```ruby
-# Using Mocha
-ExternalApi.stubs(:fetch).returns({ data: [] })
-mailer.expects(:deliver_later)
+result = processor.process
+expect(result).to eq([])
 ```
 
 ## Test Naming
@@ -290,34 +312,41 @@ mailer.expects(:deliver_later)
 ### RSpec
 
 ```ruby
-# Good - describes behavior
+# WRONG - describes implementation
+it "calls find_by on User"
+it "uses the mailer"
+
+# RIGHT - describes behavior
 it "returns nil when user not found"
 it "raises error for invalid input"
 it "sends welcome email after creation"
-
-# Bad - describes implementation
-it "calls find_by on User"
-it "uses the mailer"
 ```
 
 ### Minitest
 
 ```ruby
-# Good
+# WRONG
+test "test1"
+test "it works"
+
+# RIGHT
 test "user with no orders has zero total"
 test "invalid email prevents save"
 test "admin can access dashboard"
-
-# Bad
-test "test1"
-test "it works"
 ```
 
-## Summary
+## Common Mistakes
 
-1. Structure tests with AAA pattern
-2. One behavior per test
-3. Use `describe`/`context` (RSpec) or descriptive test names (Minitest)
-4. Prefer factories or fixtures over inline setup
-5. Mock external services, not internal objects
-6. Name tests to describe behavior
+1. **Mocking the object under test**: If you mock the object you're testing, you're testing the mock, not the code. Only mock external collaborators
+2. **Multiple unrelated assertions**: Each test should verify one behavior. Multiple assertions testing different behaviors make failures harder to diagnose
+3. **Testing private methods**: Test the public interface. Private methods are implementation details that should be covered through public method tests
+4. **Vague test names**: Names like "it works" or "test1" provide no documentation value. Describe the expected behavior
+5. **Shared state between tests**: Tests that depend on order or shared mutable state are fragile. Each test should set up its own data
+6. **Over-mocking**: If you need many mocks to test something, the code has too many dependencies. Refactor the code first
+7. **Testing framework internals**: Don't test that `validates :email, presence: true` works. Test your business logic
+8. **Missing edge cases**: Always test nil inputs, empty collections, boundary conditions, and error paths
+
+## See Also
+
+- `references/rspec.md` - Complete RSpec API reference
+- `references/minitest.md` - Complete Minitest API reference

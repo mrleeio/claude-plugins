@@ -5,7 +5,34 @@ description: Use when working on Rails frontend with Turbo Frames, Turbo Streams
 
 # Hotwire Conventions for Rails
 
-Hotwire enables fast, modern web applications by sending HTML over the wire instead of JSON. It consists of Turbo (for navigation and updates) and Stimulus (for JavaScript behavior).
+Send HTML over the wire. Use Turbo for navigation and updates. Use Stimulus only for behavior that Turbo cannot handle.
+
+## Core Rules
+
+```ruby
+# WRONG - API endpoint returning JSON for client-side rendering
+def create
+  @message = Message.create!(message_params)
+  render json: { message: @message.as_json }
+end
+
+# RIGHT - Turbo Stream response with HTML over the wire
+def create
+  @message = Message.create!(message_params)
+  respond_to do |format|
+    format.turbo_stream
+    format.html { redirect_to messages_path }
+  end
+end
+```
+
+```erb
+<%# WRONG - manual DOM manipulation in Stimulus %>
+<%# fetch("/api/messages").then(r => r.json()).then(data => { ... }) %>
+
+<%# RIGHT - Turbo Stream updates the DOM automatically %>
+<%= turbo_stream.append "messages", @message %>
+```
 
 ## Core Philosophy
 
@@ -200,10 +227,10 @@ Actions connect events to methods:
 ```
 
 **Event shorthand** (default events):
-- `<button>`, `<a>` → click
-- `<form>` → submit
-- `<input>`, `<textarea>` → input
-- `<select>` → change
+- `<button>`, `<a>` -> click
+- `<form>` -> submit
+- `<input>`, `<textarea>` -> input
+- `<select>` -> change
 
 **Multiple actions:**
 ```html
@@ -293,18 +320,24 @@ export default class extends Controller {
 </turbo-frame>
 ```
 
+## Common Mistakes
+
+1. **Reaching for JSON APIs**: Default to Turbo Streams for dynamic updates. Only use JSON APIs for third-party integrations
+2. **Fat Stimulus controllers**: If a controller has more than ~30 lines, it's likely doing too much. Split into multiple controllers or use Turbo instead
+3. **Missing `format.html` fallback**: Always provide an HTML fallback alongside `format.turbo_stream` for non-Turbo clients and redirects
+4. **Mismatched frame IDs**: The server response must include a `<turbo-frame>` with the exact same `id` as the requesting frame. Mismatches silently fail
+5. **Forgetting `_top` for navigation**: Links inside frames that should navigate the full page need `data-turbo-frame="_top"`
+6. **Not scoping frames narrowly**: Large frames defeat the purpose. Use the smallest frame that makes sense for the interaction
+7. **Manual DOM manipulation in Stimulus**: If you're doing `createElement` or direct DOM insertion, you should probably use a Turbo Stream instead
+8. **Missing `disconnect()` cleanup**: Always clean up event listeners, intervals, and observers in the Stimulus `disconnect()` callback
+
 ## Best Practices
 
 1. **Prefer Turbo over custom JavaScript** - Most interactions can be handled with Frames and Streams
-
 2. **Keep Stimulus controllers small** - Each controller should do one thing well
-
 3. **Use descriptive identifiers** - `content-loader` not `cl`, `form-validation` not `fv`
-
 4. **Leverage server rendering** - Return HTML partials, not JSON
-
 5. **Progressive enhancement** - Features should work without JavaScript when possible
-
 6. **Scope Turbo Frames narrowly** - Smaller frames = faster updates
 
 ## Reference Files

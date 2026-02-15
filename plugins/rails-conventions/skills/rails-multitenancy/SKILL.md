@@ -7,6 +7,18 @@ description: Use when implementing URL path-based multi-tenancy. Covers tenant m
 
 Implement multi-tenancy using URL path prefixes (e.g., `/12345678/boards/1`) instead of subdomains or separate databases. This approach simplifies local development, testing, and deployment.
 
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Use URL path prefix (`/{account_id}/...`) | Use subdomains for tenant isolation |
+| Extract account ID in Rack middleware | Parse account from URL in controllers |
+| Move prefix from `PATH_INFO` to `SCRIPT_NAME` | Manually prepend prefix to generated URLs |
+| Set `Current.account` in `before_action` | Pass account through every method |
+| Scope all queries through `Current.account` | Allow unscoped queries on tenant data |
+| Add `account_id` foreign keys with constraints | Rely solely on application-level scoping |
+| Set `script_name` in test setup | Skip tenant context in tests |
+
 ## Architecture Overview
 
 - URLs are prefixed with account identifier: `/{account_id}/resources/...`
@@ -165,6 +177,17 @@ def test_login
   end
 end
 ```
+
+## Common Mistakes
+
+1. **Parsing account in controllers**: Extract the account ID in Rack middleware, not in controllers. The middleware sets `SCRIPT_NAME` which makes URL generation automatic
+2. **Manually prefixing URLs**: If you find yourself prepending account IDs to URLs, the middleware isn't set up correctly. The `SCRIPT_NAME` mechanism handles this
+3. **Missing `account_id` foreign keys**: Application-level scoping can be bypassed. Always add database-level `account_id` foreign key constraints
+4. **Unscoped queries**: Every query on tenant data must be scoped through `Current.account`. An unscoped query leaks data across tenants
+5. **Forgetting `script_name` in tests**: Integration and system tests need `script_name` set in setup to generate correct URLs
+6. **Not handling untenanted routes**: Login, signup, and public pages don't have an account prefix. The middleware must gracefully handle paths without an account ID
+7. **Not preserving context in jobs**: Background jobs run outside the request lifecycle. Serialize `Current.account` and restore it in the job
+8. **Using subdomains**: Subdomains require DNS configuration, complicate local development, and make testing harder. URL path prefixes are simpler
 
 ## Key Benefits
 

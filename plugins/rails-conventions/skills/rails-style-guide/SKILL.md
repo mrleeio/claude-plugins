@@ -7,19 +7,30 @@ description: Use for Ruby/Rails code style conventions. Covers method ordering, 
 
 These conventions prioritize readability and consistency. Code should be a pleasure to read.
 
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Prefer expanded conditionals over guard clauses | Use guard clauses for mid-method returns |
+| Order methods by invocation order | Random method ordering |
+| Indent private methods under `private` keyword | Add blank line after `private` |
+| Use `!` only when a non-bang counterpart exists | Use `!` to flag destructive actions |
+| Model actions as CRUD on sub-resources | Add custom actions to controllers |
+| Keep controllers thin, models rich | Put business logic in controllers |
+| Use `_later`/`_now` suffix for async patterns | Inconsistent async naming |
+| Match surrounding code style | Introduce new patterns unilaterally |
+
 ## Conditional Returns
 
-**Prefer expanded conditionals over guard clauses:**
-
 ```ruby
-# Avoid
+# WRONG - guard clause for mid-method return
 def todos_for_new_group
   ids = params.require(:todolist)[:todo_ids]
   return [] unless ids
   @bucket.recordings.todos.find(ids.split(","))
 end
 
-# Prefer
+# RIGHT - expanded conditional
 def todos_for_new_group
   if ids = params.require(:todolist)[:todo_ids]
     @bucket.recordings.todos.find(ids.split(","))
@@ -34,6 +45,7 @@ end
 - The main body is non-trivial (several lines of code)
 
 ```ruby
+# RIGHT - guard clause at the very beginning
 def after_recorded_as_commit(recording)
   return if recording.parent.was_created?
 
@@ -123,6 +135,16 @@ end
 **No newline after `private`, indent content under it:**
 
 ```ruby
+# WRONG
+class SomeClass
+  private
+
+  def some_private_method
+    # ...
+  end
+end
+
+# RIGHT
 class SomeClass
   def some_method
     # ...
@@ -156,20 +178,17 @@ end
 **Only use `!` when there's a non-bang counterpart:**
 
 ```ruby
-# Good: save! exists because save exists
-user.save!
+# WRONG - no non-bang counterpart exists
+def destroy_everything!  # Just use destroy_everything
+end
 
-# Good: Custom method with counterpart
+# RIGHT - bang has a non-bang pair
 def process
   # returns false on failure
 end
 
 def process!
   # raises on failure
-end
-
-# Avoid: No non-bang counterpart
-def destroy_everything!  # Just use destroy_everything
 end
 ```
 
@@ -180,13 +199,13 @@ Don't use `!` to flag destructive actions. Many Ruby/Rails methods are destructi
 Model actions as CRUD on resources, not custom actions:
 
 ```ruby
-# Avoid
+# WRONG - custom actions
 resources :cards do
   post :close
   post :reopen
 end
 
-# Prefer
+# RIGHT - sub-resources
 resources :cards do
   resource :closure
 end
@@ -197,14 +216,23 @@ end
 **Thin controllers, rich models. No service objects by default:**
 
 ```ruby
-# Simple operations: direct ActiveRecord
+# WRONG - business logic in controller
+class CardsController < ApplicationController
+  def close
+    @card.update!(closed_at: Time.current)
+    Event.create!(action: :closed, eventable: @card, creator: Current.user)
+    NotificationJob.perform_later(@card)
+  end
+end
+
+# RIGHT - simple operations: direct ActiveRecord
 class Cards::CommentsController < ApplicationController
   def create
     @comment = @card.comments.create!(comment_params)
   end
 end
 
-# Complex operations: intention-revealing model methods
+# RIGHT - complex operations: intention-revealing model methods
 class Cards::GoldnessesController < ApplicationController
   def create
     @card.gild
@@ -214,9 +242,17 @@ end
 
 ## Async Operations in Jobs
 
-**Thin job classes that delegate to models:**
+**Use `_later`/`_now` suffix convention. Thin job classes that delegate to models:**
 
 ```ruby
+# WRONG - inconsistent naming, logic in job
+class Event::RelayJob < ApplicationJob
+  def perform(event)
+    event.account.webhooks.active.each { |w| w.deliver(event.payload) }
+  end
+end
+
+# RIGHT - _later/_now convention, thin job
 module Event::Relaying
   extend ActiveSupport::Concern
 
@@ -241,6 +277,17 @@ class Event::RelayJob < ApplicationJob
   end
 end
 ```
+
+## Common Mistakes
+
+1. **Guard clauses for complex returns**: Guard clauses are for simple early exits at the top of methods. For conditional returns in the middle, use expanded `if/else`
+2. **Blank line after `private`**: Indent methods under `private` without a blank line. The indentation visually groups them
+3. **Business logic in controllers**: Controllers should only route requests to model methods. Move multi-step operations into the model
+4. **Custom controller actions**: Actions like `post :close` bypass REST conventions. Model them as CRUD on sub-resources (`resource :closure`)
+5. **Using `!` without a counterpart**: The `!` suffix means "this is the dangerous version of the non-bang method." Without a non-bang counterpart, the `!` is meaningless
+6. **Random method ordering**: Methods should follow their invocation order. Private helpers should appear directly below the public method that calls them
+7. **Logic in job classes**: Jobs should be thin wrappers that call model methods. Keep the logic in the model so it can be tested without the job infrastructure
+8. **Inconsistent async naming**: Always pair `_later` (enqueues) and `_now` (synchronous) methods for async operations
 
 ## General Principles
 

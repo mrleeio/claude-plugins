@@ -47,6 +47,32 @@ docs: Update installation guide
 refactor!: Drop support for Node 14
 ```
 
+## Bad Examples — Do NOT Do This
+
+```
+# WRONG: Missing type
+Added user authentication
+
+# WRONG: Past tense (use imperative mood)
+feat: Added user authentication
+
+# WRONG: AI attribution — NEVER include these
+feat: Add user authentication
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
+# WRONG: AI attribution in footer
+feat: Add login flow
+
+Generated with Claude Code
+
+# WRONG: Missing colon+space separator
+feat Add user authentication
+
+# WRONG: Trailing period
+feat: Add user authentication.
+```
+
 ## Usage
 
 Run `/conventional-commit` to create a commit following this standard.

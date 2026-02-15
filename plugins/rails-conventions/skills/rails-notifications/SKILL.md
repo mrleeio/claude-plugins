@@ -7,6 +7,18 @@ description: Use when implementing user notifications, mentions, or email alerts
 
 Build a flexible notification system that handles different source types (events, mentions, etc.) with a factory pattern for determining recipients.
 
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Use factory pattern to route to specific notifiers | Put all notification logic in one class |
+| Use `after_create_commit` for async notification creation | Create notifications synchronously |
+| Exclude the creator from recipients | Notify the person who triggered the action |
+| Skip notifications for system/automated users | Send notifications for bot actions |
+| Support bundled/digest delivery | Only support immediate delivery |
+| Use polymorphic `source` association | Store notification type as a string |
+| Sort recipients by ID for deterministic ordering | Iterate recipients in arbitrary order |
+
 ## Core Models
 
 ### Notification Model
@@ -181,26 +193,6 @@ class Notifier::CardEventNotifier < Notifier
 end
 ```
 
-### Comment Event Notifier
-
-```ruby
-# app/models/notifier/comment_event_notifier.rb
-class Notifier::CommentEventNotifier < Notifier
-  private
-    def creator
-      source.creator
-    end
-
-    def recipients
-      card.watchers.where.not(id: creator)
-    end
-
-    def card
-      source.eventable.card
-    end
-end
-```
-
 ### Mention Notifier
 
 ```ruby
@@ -233,8 +225,6 @@ end
 ```
 
 ### Bundled Delivery (Digest)
-
-For users who prefer bundled notifications:
 
 ```ruby
 # app/jobs/notifications/deliver_bundled_job.rb
@@ -287,25 +277,16 @@ class NotificationsController < ApplicationController
 end
 ```
 
-## Views
+## Common Mistakes
 
-```erb
-<%# app/views/notifications/index.html.erb %>
-<% @notifications.each do |notification| %>
-  <%= render partial: "notifications/#{notification.source_type.underscore}",
-             locals: { notification: notification } %>
-<% end %>
-
-<%# app/views/notifications/_event.html.erb %>
-<div class="notification <%= 'unread' unless notification.read? %>">
-  <%= link_to notification.source.eventable do %>
-    <strong><%= notification.creator.name %></strong>
-    <%= notification.source.action %>
-    <strong><%= notification.source.eventable.title %></strong>
-  <% end %>
-  <span class="time"><%= time_ago_in_words(notification.created_at) %> ago</span>
-</div>
-```
+1. **Notifying the creator**: The person who performed the action should never receive a notification about it. Always exclude the creator from recipients
+2. **Notifying for system actions**: Automated/system user actions should not generate notifications. Check `creator.system?` before creating notifications
+3. **Synchronous notification creation**: Creating notifications inline blocks the request. Use `after_create_commit` to trigger async jobs
+4. **One monolithic notifier**: Different source types need different recipient logic. Use the factory pattern to route to type-specific notifiers
+5. **Non-deterministic recipient ordering**: Iterating recipients in arbitrary order can cause deadlocks when creating records. Sort recipients by ID
+6. **Missing bundling support**: Some users prefer digest emails. Support both immediate and bundled delivery via `bundled_at` timestamp
+7. **Not scoping to account**: Notifications must be scoped to the current account in multi-tenant apps to prevent cross-tenant leakage
+8. **Forgetting `read?` state management**: Always track read/unread state with a nullable `read_at` timestamp. Don't use a boolean column
 
 ## Best Practices
 

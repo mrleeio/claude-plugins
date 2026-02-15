@@ -7,30 +7,60 @@ description: This skill should be used when writing or editing Ruby code. Covers
 
 Conventions for writing clean, idiomatic Ruby code.
 
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| `snake_case` for methods, variables, symbols | `camelCase` or `ALLCAPS` for methods |
+| `PascalCase` for classes and modules | `snake_case` for class names |
+| `SCREAMING_SNAKE_CASE` for constants | `lowercase` constants |
+| Suffix predicate methods with `?` | Return booleans without `?` suffix |
+| Suffix dangerous methods with `!` | Use `!` without a non-bang counterpart |
+| Use guard clauses for early returns | Nest conditionals deeply |
+| Use `&:method` for simple transformations | Use blocks for single-method calls |
+| Use string interpolation | Concatenate strings with `+` |
+| Rescue specific exceptions | Rescue `Exception` or bare `rescue` |
+| Freeze constant collections | Leave constant arrays/hashes mutable |
+| Use implicit return | Add explicit `return` at end of method |
+| Keep methods under 10 lines | Write long methods with multiple concerns |
+
 ## Naming Conventions
 
 ### Variables and Methods
 
+Always use `snake_case` for variables, methods, and symbols. Always use `SCREAMING_SNAKE_CASE` for constants. Always use `PascalCase` for classes and modules.
+
 ```ruby
-# snake_case for variables, methods, and symbols
+# WRONG
+userName = "Alice"
+def CalculateTotal; end
+maxretrycount = 3
+
+# RIGHT
 user_name = "Alice"
 def calculate_total; end
-:payment_status
-
-# SCREAMING_SNAKE_CASE for constants
 MAX_RETRY_COUNT = 3
 DEFAULT_TIMEOUT = 30
 
-# PascalCase for classes and modules
 class UserAccount; end
 module PaymentProcessor; end
 ```
 
 ### Predicate Methods
 
-Methods returning boolean values end with `?`:
+Always suffix methods returning boolean values with `?`:
 
 ```ruby
+# WRONG
+def is_valid
+  errors.empty?
+end
+
+def check_admin
+  role == :admin
+end
+
+# RIGHT
 def valid?
   errors.empty?
 end
@@ -46,18 +76,19 @@ end
 
 ### Bang Methods
 
-Methods with `!` suffix indicate:
-- Dangerous operation (modifies receiver in place)
-- Raises exception on failure (vs returning nil)
+Only use `!` suffix when a non-bang counterpart exists. The `!` indicates a dangerous operation (modifies receiver in place) or raises on failure (vs returning nil).
 
 ```ruby
-# Modifies in place
-array.sort!
-string.upcase!
+# WRONG - no non-bang counterpart
+def destroy_everything!
+  # just use destroy_everything
+end
 
-# Raises on failure
-user.save!      # raises if invalid
-record.update!  # raises if update fails
+# RIGHT - bang has non-bang pair
+array.sort!     # sort exists
+string.upcase!  # upcase exists
+user.save!      # save exists (raises if invalid)
+record.update!  # update exists (raises if fails)
 ```
 
 ## Method Design
@@ -67,16 +98,7 @@ record.update!  # raises if update fails
 Use early returns to reduce nesting:
 
 ```ruby
-# Good - guard clauses
-def process_order(order)
-  return unless order.valid?
-  return if order.processed?
-
-  order.process
-  notify_customer(order)
-end
-
-# Bad - deep nesting
+# WRONG - deep nesting
 def process_order(order)
   if order.valid?
     unless order.processed?
@@ -85,24 +107,23 @@ def process_order(order)
     end
   end
 end
+
+# RIGHT - guard clauses
+def process_order(order)
+  return unless order.valid?
+  return if order.processed?
+
+  order.process
+  notify_customer(order)
+end
 ```
 
 ### Single Responsibility
 
-Each method should do one thing:
+Each method must do one thing:
 
 ```ruby
-# Good - separate concerns
-def create_user(params)
-  user = User.new(params)
-  user.save
-end
-
-def send_welcome_email(user)
-  UserMailer.welcome(user).deliver_later
-end
-
-# Bad - multiple responsibilities
+# WRONG - multiple responsibilities
 def create_user_and_notify(params)
   user = User.new(params)
   if user.save
@@ -111,6 +132,16 @@ def create_user_and_notify(params)
     Analytics.track(:user_created, user.id)
   end
   user
+end
+
+# RIGHT - separate concerns
+def create_user(params)
+  user = User.new(params)
+  user.save
+end
+
+def send_welcome_email(user)
+  UserMailer.welcome(user).deliver_later
 end
 ```
 
@@ -174,35 +205,39 @@ end
 
 ### Enumerable Methods
 
-Prefer functional methods over loops:
+Always prefer functional methods over loops:
 
 ```ruby
-# Good
-users.select(&:active?).map(&:email)
-numbers.sum
-items.any?(&:expired?)
-orders.find { |o| o.total > 100 }
-
-# Bad
+# WRONG
 active_emails = []
 users.each do |user|
   if user.active?
     active_emails << user.email
   end
 end
+
+# RIGHT
+users.select(&:active?).map(&:email)
+numbers.sum
+items.any?(&:expired?)
+orders.find { |o| o.total > 100 }
 ```
 
 ### Symbol-to-Proc
 
-Use `&:method` for simple transformations:
+Use `&:method` for simple transformations. Use blocks only for complex logic:
 
 ```ruby
-# Good
+# WRONG
+names.map { |n| n.upcase }
+users.select { |u| u.admin? }
+
+# RIGHT
 names.map(&:upcase)
 users.select(&:admin?)
 numbers.reduce(&:+)
 
-# When to use block (complex logic)
+# RIGHT - block for complex logic
 users.map { |u| "#{u.first_name} #{u.last_name}" }
 ```
 
@@ -211,12 +246,17 @@ users.map { |u| "#{u.first_name} #{u.last_name}" }
 Ruby returns the last expression. Use explicit `return` only for early exits:
 
 ```ruby
-# Good - implicit return
+# WRONG
+def full_name
+  return "#{first_name} #{last_name}"
+end
+
+# RIGHT - implicit return
 def full_name
   "#{first_name} #{last_name}"
 end
 
-# Good - explicit early return
+# RIGHT - explicit early return
 def process
   return if invalid?
 
@@ -229,18 +269,21 @@ end
 ### Interpolation over Concatenation
 
 ```ruby
-# Good
+# WRONG
+"Hello, " + user.name + "!"
+
+# RIGHT
 "Hello, #{user.name}!"
 "Order ##{order.id} - #{order.status}"
-
-# Bad
-"Hello, " + user.name + "!"
 ```
 
 ### Heredocs for Multi-line Strings
 
 ```ruby
-# Good
+# WRONG
+message = "Dear #{user.name},\n\nYour order has been shipped.\n\nThanks,\nThe Team"
+
+# RIGHT
 message = <<~MSG
   Dear #{user.name},
 
@@ -249,19 +292,23 @@ message = <<~MSG
   Thanks,
   The Team
 MSG
-
-# Bad
-message = "Dear #{user.name},\n\nYour order has been shipped.\n\nThanks,\nThe Team"
 ```
 
 ## Error Handling
 
 ### Specific Exceptions
 
-Rescue specific exceptions, not generic `Exception` or `StandardError`:
+Always rescue specific exceptions, never generic `Exception` or `StandardError`:
 
 ```ruby
-# Good
+# WRONG
+begin
+  process_payment
+rescue => e
+  log_error(e)
+end
+
+# RIGHT
 begin
   process_payment
 rescue Stripe::CardError => e
@@ -269,13 +316,6 @@ rescue Stripe::CardError => e
   flash[:error] = "Payment failed: #{e.message}"
 rescue Stripe::RateLimitError
   retry_later
-end
-
-# Bad
-begin
-  process_payment
-rescue => e
-  log_error(e)
 end
 ```
 
@@ -295,9 +335,14 @@ end
 
 ### Frozen Collections
 
-Freeze constant collections to prevent modification:
+Always freeze constant collections to prevent modification:
 
 ```ruby
+# WRONG
+VALID_STATUSES = %i[pending active completed cancelled]
+DEFAULT_OPTIONS = { timeout: 30, retries: 3 }
+
+# RIGHT
 VALID_STATUSES = %i[pending active completed cancelled].freeze
 DEFAULT_OPTIONS = { timeout: 30, retries: 3 }.freeze
 ```
@@ -307,22 +352,23 @@ DEFAULT_OPTIONS = { timeout: 30, retries: 3 }.freeze
 Use `&.` for potentially nil receivers:
 
 ```ruby
-# Good
-user&.address&.city
-
-# Equivalent to
+# WRONG
 user && user.address && user.address.city
+
+# RIGHT
+user&.address&.city
 ```
 
-## Summary
+## Common Mistakes
 
-1. Use consistent naming (snake_case, PascalCase, SCREAMING_SNAKE)
-2. Design small, focused methods with guard clauses
-3. Follow standard class structure ordering
-4. Prefer enumerable methods over loops
-5. Use string interpolation and heredocs
-6. Rescue specific exceptions
-7. Freeze constant collections
+1. **Using `camelCase` for methods**: Ruby uses `snake_case` exclusively for methods and variables
+2. **Rescuing `Exception`**: This catches `SystemExit` and `SignalException`. Always rescue specific errors or `StandardError` at most
+3. **Mutable constants**: Forgetting to `.freeze` arrays and hashes assigned to constants allows accidental mutation
+4. **String concatenation**: Using `+` instead of interpolation is slower and harder to read
+5. **Deep nesting**: More than 2 levels of conditionals signals the need for guard clauses or method extraction
+6. **Explicit return at end of method**: Ruby's implicit return makes this unnecessary noise
+7. **Using `self.` unnecessarily**: Only needed for assignment (`self.name = ...`) or to disambiguate from local variables
+8. **Block form for single-method calls**: Use `&:method_name` instead of `{ |x| x.method_name }`
 
 ## See Also
 

@@ -55,21 +55,24 @@ Or for all gems with executables:
 bundle binstubs --all
 ```
 
+## Priority Order
+
+1. **`bin/<command>`** — Always preferred when the binstub exists
+2. **`bundle exec <command>`** — Acceptable fallback when no binstub exists
+3. **Bare `<command>`** — Only when no binstub exists AND not in a Bundler project
+
 ## When bundle exec Is Acceptable
 
-Use `bundle exec` only when:
-- No binstub exists and creating one isn't worthwhile
+`bundle exec` is the correct approach when:
+- No binstub exists for the gem
+- Creating a binstub isn't worthwhile for a rarely-used gem
 - Running a one-off command from a gem not in the Gemfile
 
 ## Hook Enforcement
 
-The `bash-binstub-enforcer.sh` hook automatically:
-- Blocks `bundle exec <gem>` when `bin/<gem>` exists
-- Blocks bare gem commands when binstubs exist
-- Suggests the correct binstub command
-
-## Summary
-
-1. **`bin/<command>`** - Always preferred when binstub exists
-2. **`bundle exec <command>`** - When no binstub exists
-3. **Never use bare commands** - May use wrong gem versions
+The `bash-binstub-enforcer.sh` hook dynamically detects binstubs and:
+- Blocks `bundle exec <gem>` when `bin/<gem>` exists (suggests binstub)
+- Blocks bare gem commands when a binstub exists (suggests binstub)
+- Allows `bundle exec` when no binstub exists (correct fallback)
+- Allows bare commands when no binstub exists
+- Works with **any** gem — no hard-coded list, checks `bin/` directory at runtime

@@ -7,6 +7,18 @@ description: Use when implementing event tracking, activity logs, or webhooks. C
 
 Track significant actions in your application using a polymorphic `Event` model. Events drive activity timelines, notifications, webhooks, and audit trails.
 
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Track domain events (`closed`, `assigned`, `moved`) | Track generic CRUD (`updated`, `saved`) |
+| Store context in `particulars` JSON column | Rely on current state for historical data |
+| Use `after_create_commit` for async side effects | Trigger side effects synchronously |
+| Dispatch webhooks and notifications in background jobs | Send webhooks inline during request |
+| Track events in explicit model methods | Track events in `after_save` callbacks |
+| Scope events to account for multi-tenant isolation | Create global events without account scoping |
+| Include `Eventable` concern for consistent interface | Duplicate event tracking logic per model |
+
 ## Event Model
 
 ```ruby
@@ -192,6 +204,16 @@ track_event :updated,
   old_value: title_was,
   new_value: title
 ```
+
+## Common Mistakes
+
+1. **Tracking CRUD instead of domain events**: Events like `updated` or `saved` are noise. Track meaningful actions like `closed`, `assigned`, `moved` that users care about
+2. **Not storing context in particulars**: Relying on current state means historical events become meaningless when data changes. Always store old/new values in `particulars`
+3. **Synchronous side effects**: Webhook delivery and notification creation should happen in background jobs via `after_create_commit`, not synchronously during the request
+4. **Tracking events in `after_save` callbacks**: This creates events for every save, including internal updates. Track events explicitly in domain methods like `close` and `move_to`
+5. **Missing account scoping**: In multi-tenant apps, events without `account_id` can leak across tenants. Always scope events to an account
+6. **Not using transactions**: Event creation and the state change it records should be in the same transaction. If the event fails, the state change should roll back
+7. **Forgetting to include creator**: Events without a creator lose attribution. Use `default: -> { Current.user }` on the `creator` association
 
 ## Best Practices
 

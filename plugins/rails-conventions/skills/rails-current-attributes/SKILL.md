@@ -7,9 +7,21 @@ description: Use when working with CurrentAttributes for request-scoped state li
 
 Use Rails' `CurrentAttributes` to manage request-scoped state like the current user, account, or session. This pattern provides clean access to context throughout your application without threading state through every method call.
 
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Inherit from `ActiveSupport::CurrentAttributes` | Roll your own thread-local storage |
+| Set context in `before_action` | Set `Current` in models or views |
+| Use cascading setters for dependent attributes | Set each attribute independently |
+| Provide fallback values (e.g., system user) | Return `nil` without fallback |
+| Use `with_account` block helpers for temp context | Manually save/restore attributes |
+| Call `Current.clear_all` in test teardown | Let state leak between tests |
+| Use `default: -> { Current.user }` in associations | Pass `Current.user` manually everywhere |
+
 ## Core Implementation
 
-Create a `Current` class that inherits from `ActiveRecord::CurrentAttributes`:
+Create a `Current` class that inherits from `ActiveSupport::CurrentAttributes`:
 
 ```ruby
 # app/models/current.rb
@@ -140,6 +152,16 @@ def test_with_different_account
   # Original account restored
 end
 ```
+
+## Common Mistakes
+
+1. **Setting Current outside controllers**: `Current` attributes should only be set in controller `before_action` callbacks or job setup. Setting them in models or views creates hidden dependencies
+2. **Forgetting `Current.clear_all` in tests**: Without clearing, state from one test leaks into the next. Always call `Current.clear_all` in teardown
+3. **Not using cascading setters**: Setting `session`, `identity`, and `user` independently can lead to inconsistent state. Use cascading setters so setting `session` automatically derives `user`
+4. **Missing fallback values**: `Current.user` returning `nil` causes `NoMethodError` downstream. Provide a fallback like `account&.system_user`
+5. **Directly accessing `Thread.current`**: Use `ActiveSupport::CurrentAttributes` instead of rolling your own thread-local storage. It handles reset-on-request automatically
+6. **Not preserving context in jobs**: Background jobs run in a different thread. Serialize `Current.account` and restore it in the job (see the multitenancy reference)
+7. **Using `Current` in migrations**: Migrations run outside the request lifecycle. `Current.account` will be `nil`. Pass account explicitly
 
 ## Key Principles
 

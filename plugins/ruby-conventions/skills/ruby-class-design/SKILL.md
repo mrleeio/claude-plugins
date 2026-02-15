@@ -5,16 +5,68 @@ description: This skill should be used when designing Ruby classes and modules. 
 
 # Ruby Class Design
 
-Conventions for designing well-structured Ruby classes and modules.
+Prefer composition over inheritance. Inject dependencies. Keep classes focused on one responsibility.
 
-## SOLID Principles for Ruby
+## Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Compose objects via delegation | Build deep inheritance hierarchies |
+| Inject dependencies via constructor | Hard-code dependencies inside methods |
+| Keep classes focused on one responsibility | Give classes multiple reasons to change |
+| Use small, focused modules for shared behavior | Create fat modules with unrelated methods |
+| Use named parameters for constructors | Use positional arguments for >2 params |
+| Create value objects for immutable data | Pass raw hashes for structured data |
+| Use service objects for single operations | Put multi-step logic in controllers |
+| Depend on abstractions (duck typing) | Depend on concrete classes |
+
+## Core Rules
+
+```ruby
+# WRONG - deep inheritance, hard-coded dependencies, multiple responsibilities
+class Order < BaseOrder < AbstractOrder < Entity
+  def process
+    StripeGateway.new.charge(total)
+    EmailNotifier.new.notify(self)
+    PdfGenerator.new.generate_invoice(self)
+  end
+end
+
+# RIGHT - composition, injected dependencies, single responsibility
+class OrderProcessor
+  def initialize(payment_gateway:, notifier:)
+    @payment_gateway = payment_gateway
+    @notifier = notifier
+  end
+
+  def process(order)
+    @payment_gateway.charge(order.total)
+    @notifier.notify(order)
+  end
+end
+
+OrderProcessor.new(
+  payment_gateway: StripeGateway.new,
+  notifier: EmailNotifier.new
+)
+```
+
+## SOLID Principles
 
 ### Single Responsibility Principle (SRP)
 
-Each class should have one reason to change:
+Give each class one reason to change:
 
 ```ruby
-# Good - separate responsibilities
+# WRONG - too many responsibilities
+class Order
+  def total; end
+  def to_pdf; end
+  def send_confirmation_email; end
+  def sync_to_accounting_system; end
+end
+
+# RIGHT - separate responsibilities
 class Order
   def total
     line_items.sum(&:subtotal)
@@ -40,22 +92,27 @@ class OrderNotifier
     # Email logic
   end
 end
-
-# Bad - too many responsibilities
-class Order
-  def total; end
-  def to_pdf; end
-  def send_confirmation_email; end
-  def sync_to_accounting_system; end
-end
 ```
 
 ### Open/Closed Principle (OCP)
 
-Open for extension, closed for modification:
+Design classes to be extended without modification:
 
 ```ruby
-# Good - extensible via new classes
+# WRONG - requires modification for each new type
+class PaymentProcessor
+  def process(payment)
+    case payment.type
+    when :credit_card
+      # credit card logic
+    when :paypal
+      # PayPal logic
+    # Must modify this class for each new payment type
+    end
+  end
+end
+
+# RIGHT - extensible via new classes
 class PaymentProcessor
   def process(payment)
     payment.execute
@@ -73,27 +130,27 @@ class PayPalPayment
     # PayPal logic
   end
 end
-
-# Bad - requires modification for each new type
-class PaymentProcessor
-  def process(payment)
-    case payment.type
-    when :credit_card
-      # credit card logic
-    when :paypal
-      # PayPal logic
-    # Must modify this class for each new payment type
-    end
-  end
-end
 ```
 
 ### Liskov Substitution Principle (LSP)
 
-Subclasses should be substitutable for their base classes:
+Ensure subclasses are substitutable for their base classes:
 
 ```ruby
-# Good - subtypes work as expected
+# WRONG - violates expectations
+class Bird
+  def fly
+    # flying logic
+  end
+end
+
+class Penguin < Bird
+  def fly
+    raise "Penguins can't fly!"  # Breaks LSP
+  end
+end
+
+# RIGHT - subtypes work as expected
 class Bird
   def move
     # generic movement
@@ -111,27 +168,23 @@ class Penguin < Bird
     walk
   end
 end
-
-# Bad - violates expectations
-class Bird
-  def fly
-    # flying logic
-  end
-end
-
-class Penguin < Bird
-  def fly
-    raise "Penguins can't fly!"  # Breaks LSP
-  end
-end
 ```
 
 ### Interface Segregation Principle (ISP)
 
-Prefer small, focused interfaces:
+Use small, focused modules instead of fat interfaces:
 
 ```ruby
-# Good - focused modules
+# WRONG - fat interface
+module Reportable
+  def to_pdf; end
+  def to_csv; end
+  def to_json; end
+  def send_email; end
+  def archive; end
+end
+
+# RIGHT - focused modules
 module Printable
   def to_pdf; end
 end
@@ -149,23 +202,22 @@ end
 class Summary
   include Printable  # Only needs printing
 end
-
-# Bad - fat interface
-module Reportable
-  def to_pdf; end
-  def to_csv; end
-  def to_json; end
-  def send_email; end
-  def archive; end
-end
 ```
 
 ### Dependency Inversion Principle (DIP)
 
-Depend on abstractions, not concretions:
+Depend on abstractions (duck typing), not concrete classes:
 
 ```ruby
-# Good - depends on abstraction
+# WRONG - hard-coded dependencies
+class OrderProcessor
+  def process(order)
+    StripeGateway.new.charge(order.total)
+    EmailNotifier.new.notify(order)
+  end
+end
+
+# RIGHT - depends on abstraction
 class OrderProcessor
   def initialize(payment_gateway:, notifier:)
     @payment_gateway = payment_gateway
@@ -183,14 +235,6 @@ OrderProcessor.new(
   payment_gateway: StripeGateway.new,
   notifier: EmailNotifier.new
 )
-
-# Bad - hard-coded dependencies
-class OrderProcessor
-  def process(order)
-    StripeGateway.new.charge(order.total)
-    EmailNotifier.new.notify(order)
-  end
-end
 ```
 
 ## Composition Over Inheritance
@@ -198,7 +242,10 @@ end
 ### Favor Delegation
 
 ```ruby
-# Good - composition
+# WRONG - deep inheritance
+class Cart < BaseCart < AbstractCart < Entity
+
+# RIGHT - composition
 class ShoppingCart
   def initialize
     @items = []
@@ -216,16 +263,14 @@ class DiscountCalculator
     # discount logic
   end
 end
-
-# Avoid deep inheritance
-# Bad
-class Cart < BaseCart < AbstractCart < Entity
 ```
 
 ### When Inheritance Is Appropriate
 
+Use inheritance only for true "is-a" relationships with shared behavior:
+
 ```ruby
-# Good - "is-a" relationship with shared behavior
+# RIGHT - "is-a" relationship with shared behavior
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 end
@@ -233,7 +278,7 @@ end
 class User < ApplicationRecord
 end
 
-# Good - template method pattern
+# RIGHT - template method pattern
 class Report
   def generate
     header + body + footer
@@ -266,6 +311,8 @@ end
 ## Module Patterns
 
 ### Mixins for Shared Behavior
+
+Use modules to share behavior across unrelated classes:
 
 ```ruby
 module Timestamped
@@ -311,6 +358,8 @@ end
 
 ### Namespace Modules
 
+Use modules for logical grouping:
+
 ```ruby
 module Payments
   class Processor
@@ -333,71 +382,37 @@ end
 Payments::Processor.new.process(payment)
 ```
 
-### Module as Namespace + Behavior
-
-```ruby
-module Loggable
-  def self.included(base)
-    base.extend(ClassMethods)
-  end
-
-  module ClassMethods
-    def log_prefix
-      "[#{name}]"
-    end
-  end
-
-  def log(message)
-    puts "#{self.class.log_prefix} #{message}"
-  end
-end
-```
-
 ## Class Design Patterns
 
-See `references/design-patterns.md` for detailed implementation examples.
+See `references/design-patterns.md` for detailed implementation examples and templates in `assets/templates/`.
 
 ### Value Objects
 
-Immutable objects representing values. Use for money, dates, coordinates, etc.
-
-Key characteristics:
-- Frozen after initialization
-- Equality based on attributes, not identity
-- Implement `==`, `eql?`, and `hash`
+Create immutable objects for structured data. Freeze after initialization. Implement equality based on attributes.
 
 ### Service Objects
 
-Encapsulate a single business operation with a `#call` method.
-
-Key characteristics:
-- Single public method (`call`)
-- Dependencies injected via constructor
-- Returns result or raises exception
+Encapsulate a single business operation with a `#call` method. Inject dependencies via constructor. Return a result or raise an exception.
 
 ### Query Objects
 
-Encapsulate complex database queries.
-
-Key characteristics:
-- Initialize with base relation
-- Chainable methods
-- Return ActiveRecord relations
+Encapsulate complex database queries. Initialize with a base relation. Return ActiveRecord relations for chaining.
 
 ### Form Objects
 
-Handle complex form logic separate from models.
-
-Key characteristics:
-- Include `ActiveModel::Model`
-- Custom validations
-- `#save` method that creates/updates records
+Handle complex form logic separate from models. Include `ActiveModel::Model`. Implement `#save` that creates/updates records.
 
 ## Constructor Patterns
 
 ### Named Parameters
 
+Always use named parameters when a method takes more than 2 arguments:
+
 ```ruby
+# WRONG
+Report.new(Date.today, Date.tomorrow, :pdf, true)
+
+# RIGHT
 class Report
   def initialize(start_date:, end_date:, format: :pdf)
     @start_date = start_date
@@ -409,17 +424,18 @@ end
 Report.new(start_date: Date.today, end_date: Date.tomorrow)
 ```
 
-### Builder Pattern
+## Common Mistakes
 
-For objects with many optional parameters. See `references/design-patterns.md` for example.
+1. **Deep inheritance hierarchies**: More than 2 levels deep signals the need for composition. Prefer delegation over `super` chains
+2. **God classes**: Classes with too many methods or instance variables. Split into focused collaborators
+3. **Hard-coded dependencies**: Instantiating collaborators inside methods prevents testing and reuse. Inject via constructor
+4. **Fat modules**: Including a module that adds 10+ methods couples classes to unrelated behavior. Keep modules focused
+5. **Positional constructor arguments**: `User.new("Alice", 30, true)` is unreadable. Use keyword arguments
+6. **Mutable value objects**: Forgetting to freeze value objects allows corruption. Always `freeze` in `initialize`
+7. **Missing duck typing**: Checking `is_a?` instead of responding to a method. Use `respond_to?` or trust the interface
+8. **Service objects with state**: Service objects should be stateless. Pass data through `#call`, not through instance variables that persist
 
-## Summary
+## See Also
 
-1. Apply SOLID principles appropriately
-2. Prefer composition over deep inheritance
-3. Use modules for shared behavior and namespacing
-4. Create small, focused classes
-5. Use value objects for immutable data
-6. Extract service objects for complex operations
-7. Use query objects for complex database queries
-8. Use form objects for complex validations
+- `references/design-patterns.md` - Value objects, service objects, query objects, form objects
+- `assets/templates/` - Scaffolding templates for common patterns

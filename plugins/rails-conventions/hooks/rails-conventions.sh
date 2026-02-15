@@ -1,6 +1,23 @@
 #!/bin/bash
-# PreToolUse hook: Enforce Rails conventions skills when editing Rails files
-# Uses deny-until-skill-loaded pattern - blocks edits until required skill is loaded
+# PATTERN: Deny-Until-Skill-Loaded
+# This hook blocks file edits until the appropriate Rails convention skill
+# has been loaded in the current session. This ensures Claude reads
+# the conventions before making changes.
+#
+# Flow:
+#   1. Intercept Edit/Write/MultiEdit tool calls
+#   2. Check if the file matches a Rails pattern (e.g., app/controllers/*.rb)
+#   3. Check if the required skill was loaded (grep transcript)
+#   4. If not loaded: exit 2 (block) with instructions to load skill
+#   5. If loaded: exit 0 (allow)
+
+# Fail-safe: ANY unhandled error exits 0 (allow)
+trap 'exit 0' ERR
+
+# Check if jq is available
+if ! command -v jq &>/dev/null; then
+  exit 0
+fi
 
 LOG_FILE="/tmp/claude-skill-usage.log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
@@ -32,11 +49,11 @@ if [[ -z "$file_path" ]]; then
 fi
 
 # Function to check if skill was loaded in transcript
+# Uses flexible whitespace matching to handle JSON serialization variations
 skill_loaded() {
   local skill="$1"
   if [[ -n "$transcript_path" && -f "$transcript_path" ]]; then
-    if grep -q "\"skill\": \"$skill\"" "$transcript_path" 2>/dev/null || \
-       grep -q "\"skill\":\"$skill\"" "$transcript_path" 2>/dev/null; then
+    if grep -qE "\"skill\"[[:space:]]*:[[:space:]]*\"$skill\"" "$transcript_path" 2>/dev/null; then
       return 0
     fi
   fi

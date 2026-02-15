@@ -1,6 +1,13 @@
 #!/bin/bash
-# PreToolUse hook: Enforce binstub usage for gem commands
-# Intercepts Bash tool calls and suggests binstubs when available
+# PATTERN: Dynamic Binstub Enforcement
+# This hook blocks gem commands when a binstub exists in bin/,
+# dynamically checking for any binstub rather than using a hard-coded list.
+#
+# Flow:
+#   1. Intercept Bash tool calls
+#   2. Check if command is `bundle exec <gem>` with a binstub → block, suggest binstub
+#   3. Check if command is a bare `<gem>` with a binstub → block, suggest binstub
+#   4. If no binstub exists → allow (bundle exec or bare command is fine)
 
 # Fail-safe: ANY unhandled error exits 0 (allow)
 trap 'exit 0' ERR
@@ -36,26 +43,10 @@ if [[ -z "$command" ]]; then
   exit 0
 fi
 
-# Common gems that should use binstubs
-BINSTUB_GEMS="rspec rubocop rake rails erb_lint standardrb srb"
-
-# Function to suggest binstub usage
-suggest_binstub() {
-  local gem_name="$1"
-  local original_cmd="$2"
-  local suggested_cmd="$3"
-
-  cat >&2 << EOF
-BLOCKED: Use binstub instead of $original_cmd
-
-A binstub exists at bin/$gem_name. Use it instead:
-
-  $suggested_cmd
-
-Why: Binstubs ensure the correct gem version from Gemfile.lock is used.
-EOF
-  exit 2
-}
+# Don't process if already using bin/ prefix
+if [[ "$command" =~ ^bin/ ]]; then
+  exit 0
+fi
 
 # Pattern 1: bundle exec <gem> [args]
 if [[ "$command" =~ ^bundle[[:space:]]+exec[[:space:]]+([a-zA-Z0-9_-]+)(.*)?$ ]]; then
@@ -63,22 +54,37 @@ if [[ "$command" =~ ^bundle[[:space:]]+exec[[:space:]]+([a-zA-Z0-9_-]+)(.*)?$ ]]
   remaining_args="${BASH_REMATCH[2]}"
 
   if [[ -x "bin/$gem_name" ]]; then
-    suggested="bin/$gem_name$remaining_args"
-    suggest_binstub "$gem_name" "bundle exec $gem_name" "$suggested"
+    cat >&2 << EOF
+BLOCKED: Use binstub instead of bundle exec $gem_name
+
+A binstub exists at bin/$gem_name. Use it instead:
+
+  bin/$gem_name$remaining_args
+
+Why: Binstubs ensure the correct gem version and are faster.
+EOF
+    exit 2
   fi
+  # No binstub exists — bundle exec is fine, allow it
+  exit 0
 fi
 
-# Pattern 2: Bare gem commands (rspec, rubocop, rake, etc.) without bin/ prefix
-for gem in $BINSTUB_GEMS; do
-  # Match: gem [args] but not bin/gem
-  if [[ "$command" =~ ^${gem}([[:space:]]|$) ]] && [[ ! "$command" =~ ^bin/ ]]; then
-    if [[ -x "bin/$gem" ]]; then
-      # Extract args after the gem name
-      args="${command#$gem}"
-      suggested="bin/$gem$args"
-      suggest_binstub "$gem" "$gem" "$suggested"
-    fi
-  fi
-done
+# Pattern 2: Bare gem command without bin/ prefix
+# Dynamically check if a binstub exists for the first word of the command
+first_word="${command%% *}"
+if [[ -x "bin/$first_word" ]]; then
+  args="${command#$first_word}"
+  cat >&2 << EOF
+BLOCKED: Use binstub instead of bare command '$first_word'
 
+A binstub exists at bin/$first_word. Use it instead:
+
+  bin/$first_word$args
+
+Why: Binstubs ensure the correct gem version from Gemfile.lock.
+EOF
+  exit 2
+fi
+
+# No binstub for this command — allow it through
 exit 0
