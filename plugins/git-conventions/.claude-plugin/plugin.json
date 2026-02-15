@@ -2,7 +2,6 @@
   "name": "git-conventions",
   "version": "1.1.0",
   "description": "Git conventions and best practices including Conventional Commits standard (v1.0.0)",
-  "instructions": "NEVER include Co-Authored-By lines referencing Claude, AI, or any automated tool in commit messages. NEVER include 'Generated with Claude Code' or similar attribution. NEVER mention AI, Claude, or automated generation in commit messages. Use Conventional Commits format: <type>[optional scope]: <description>. Capitalize the description, no trailing period, imperative mood.",
   "keywords": ["git", "commits", "conventional-commits", "commit-message"],
   "author": {
     "name": "mrleeio",

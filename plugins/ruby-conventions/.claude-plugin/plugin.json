@@ -2,7 +2,6 @@
   "name": "ruby-conventions",
   "version": "1.1.0",
   "description": "Ruby coding conventions plugin covering binstubs, style guide, testing (RSpec/Minitest), gem conventions, and class design patterns",
-  "instructions": "In Ruby projects with a Gemfile, prefer bin/<command> when the binstub exists. Fall back to bundle exec <command> when no binstub is available. Never run bare gem commands when a binstub exists in bin/.",
   "author": {
     "name": "mrleeio",
     "url": "https://github.com/mrleeio"

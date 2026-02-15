@@ -2,7 +2,6 @@
   "name": "rails-conventions",
   "version": "2.1.0",
   "description": "Comprehensive Rails conventions plugin covering controllers, models, views, policies, jobs, migrations, Stimulus, testing, Hotwire (Turbo/Stimulus), ViewComponent, and 37signals-inspired patterns for CurrentAttributes, events, notifications, state resources, and multi-tenancy",
-  "instructions": "When working in a Rails project, always load the appropriate rails-conventions skill before editing files. Never skip authorization in controllers. Prefer ViewComponents over helpers and partials.",
   "author": {
     "name": "mrleeio",
     "url": "https://github.com/mrleeio"
