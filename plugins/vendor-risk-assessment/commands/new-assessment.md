@@ -15,19 +15,17 @@ Load the vendor-tiering skill:
 
 ---
 
-## Round 1: Vendor Identity (1 compound question)
+## Round 1: Vendor Identity (1 question)
 
-Use AskUserQuestion to collect three fields in a **single question**:
+Use AskUserQuestion to collect a single input:
 
 Ask:
-> **Let's start a new vendor risk assessment.**
->
-> Please provide the following:
-> 1. **Vendor name** — the company name
-> 2. **Product/Service** — the specific product or service you're assessing
-> 3. **Website URL** — the vendor's website (e.g., https://example.com)
+> **What vendor would you like to assess?**
+> Provide a company name (e.g., "Zulip") or website URL (e.g., https://zulip.com).
 
-Parse the three values from the response. If any are missing, ask a brief follow-up for just the missing field(s).
+Parse the response:
+- If a URL is provided, extract the vendor name from the domain and use the URL for research.
+- If only a name is provided, use it for web searches to find the vendor's website.
 
 ---
 
@@ -37,17 +35,23 @@ After Round 1, research the vendor using WebSearch and WebFetch. Do NOT ask the 
 
 ### Research Steps
 
-1. **WebSearch** for `"[vendor name]" site:trust OR security OR compliance` to find their trust/security page
-2. **WebFetch** the vendor's website (homepage or /security, /trust, /compliance page) to extract:
+1. **Find the vendor's website** (if not provided): WebSearch for `"[vendor name]" official site` and identify the primary domain.
+2. **WebFetch** the vendor's homepage to extract:
+   - **Product/service name** — the specific product(s) offered
+   - **Business purpose** — the product's core value proposition
    - **Deployment model** — look for terms like "cloud-hosted", "SaaS", "self-hosted", "on-premises", "hybrid"
-   - **Business purpose** — extract the product's core value proposition
+3. **WebSearch** for `"[vendor name]" site:trust OR security OR compliance` to find their trust/security page.
+4. **WebFetch** the trust/security page (if found) to extract:
    - **Certifications** — SOC 2, ISO 27001, HIPAA, PCI DSS, FedRAMP, etc.
-3. **WebSearch** for `"[vendor name]" SOC 2 OR "ISO 27001" OR HIPAA OR "PCI DSS"` to find certification mentions
-4. **WebSearch** for `"[vendor name]" sub-processors OR subprocessors` to check for a sub-processor list (indicates SaaS model)
+5. **WebSearch** for `"[vendor name]" SOC 2 OR "ISO 27001" OR HIPAA OR "PCI DSS"` to find certification mentions.
+6. **WebSearch** for `"[vendor name]" sub-processors OR subprocessors` to check for a sub-processor list (indicates SaaS model).
 
 ### Research Output (internal — not shown to user yet)
 
 Compile findings into these variables for use in Round 2:
+- `detected_vendor_name`: confirmed company name
+- `detected_website`: vendor's primary URL
+- `detected_product`: product/service name or Unknown
 - `detected_deployment_model`: SaaS / Self-hosted / Hybrid / Unknown
 - `detected_business_purpose`: one-line description or Unknown
 - `detected_certifications`: list of found certifications or empty
@@ -68,6 +72,8 @@ Ask:
 >
 > | Detail | Auto-detected | Source |
 > |--------|--------------|--------|
+> | Website | [detected_website] | [search or provided] |
+> | Product/Service | [detected_product] | [URL or "vendor website"] |
 > | Deployment Model | [detected_deployment_model] | [URL or "vendor website"] |
 > | Business Purpose | [detected_business_purpose] | [URL or "vendor website"] |
 > | Certifications | [detected_certifications] | [URL(s)] |
@@ -99,17 +105,18 @@ Ask:
 
 ### If research found nothing:
 
-Ask the same question but replace the findings table with direct questions for deployment model and business purpose:
-> I wasn't able to find security details for [Vendor Name] online. I'll need a few extra details from you:
+Ask the same question but replace the findings table with direct questions for the details that couldn't be auto-detected:
+> I wasn't able to find details for [Vendor Name] online. I'll need a few extra details from you:
 >
-> 1. **Deployment model**:
+> 1. **Website URL** — the vendor's website
+> 2. **Product/Service** — the specific product or service you're assessing
+> 3. **Deployment model**:
 >    - SaaS / Cloud-hosted
 >    - Self-hosted / On-premises
 >    - Hybrid
+> 4. **Business purpose** — what business function does this support?
 >
-> 2. **Business purpose** — what business function does this support?
->
-> 3-5. [same data types, volume, and integration depth questions as above]
+> 5-7. [same data types, volume, and integration depth questions as above]
 
 Parse all values from the response. Apply any corrections the user provides to the auto-detected values.
 
@@ -362,6 +369,6 @@ Present a summary of everything set up and recommend the next actions:
 
 | Scenario | Rounds | Details |
 |----------|:------:|---------|
-| **First assessment** | 4 | Vendor identity → AI research → Assessment context → Org profile → Tier confirmation |
-| **Subsequent assessments** | 3 | Vendor identity → AI research → Assessment context → Tier confirmation |
+| **First assessment** | 4 | Vendor name/URL → AI research → Assessment context → Org profile → Tier confirmation |
+| **Subsequent assessments** | 3 | Vendor name/URL → AI research → Assessment context → Tier confirmation |
 | **Previous wizard** | 13 | One question per field |
