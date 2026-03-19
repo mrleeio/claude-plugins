@@ -1,6 +1,6 @@
 {
   "name": "vendor-risk-assessment",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Vendor Risk Assessment (VRA) plugin for cybersecurity consultants. Research vendors, verify evidence, score risks, and write reports following NIST, ISO 27001, SOC 2, SIG, CSA CCM, and FAIR methodologies. Covers 15 assessment domains, vendor tiering, regulatory mapping (DORA, NIS2, SEC, EU AI Act), fourth-party risk, and continuous monitoring.",
   "keywords": [
     "vendor-risk-assessment",

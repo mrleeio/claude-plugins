@@ -45,6 +45,49 @@ After Round 1, research the vendor using WebSearch and WebFetch. Do NOT ask the 
    - **Certifications** — SOC 2, ISO 27001, HIPAA, PCI DSS, FedRAMP, etc.
 5. **WebSearch** for `"[vendor name]" SOC 2 OR "ISO 27001" OR HIPAA OR "PCI DSS"` to find certification mentions.
 6. **WebSearch** for `"[vendor name]" sub-processors OR subprocessors` to check for a sub-processor list (indicates SaaS model).
+7. **WebFetch** the vendor's integrations/API documentation page (if found) to determine:
+   - **Integration depth** — does the product offer APIs, SSO/SAML, data sync, webhooks, or is it standalone?
+
+### Infer Data Types from Product Category
+
+Based on what the product does, infer the **likely data types** it will process:
+
+| Product Category | Inferred Data Types |
+|-----------------|-------------------|
+| HR / People management | PII, Financial |
+| Payment / Billing | PCI, PII, Financial |
+| Healthcare / EHR | PHI, PII |
+| Identity / SSO provider | Credentials, PII |
+| CRM / Sales | PII, Business Confidential |
+| Email / Messaging | PII, Internal |
+| Analytics / Monitoring | Internal |
+| Project management | Internal |
+| CI/CD / Developer tools | Credentials, Internal |
+| Marketing (no PII) | Public |
+| Documentation / Wiki | Internal |
+
+If the product doesn't clearly fit a category, default to Internal.
+
+### Infer Integration Depth from Product Capabilities
+
+Based on the vendor's documentation and product type:
+
+| Signal | Inferred Integration Depth |
+|--------|---------------------------|
+| Extensive API docs, webhooks, data sync, shared infrastructure | **Deep** (4) |
+| SSO/SAML support, some API endpoints, OAuth | **Moderate** (3) |
+| SSO only, browser-based access, no API | **Light** (2) |
+| No integrations, standalone product | **Standalone** (1) |
+
+### Infer Data Volume from Product Type
+
+Based on the product category and typical usage:
+
+| Product Category | Inferred Volume |
+|-----------------|----------------|
+| Infrastructure, payment processing, analytics, CRM at scale | 100K+ records |
+| HR, project management, collaboration, mid-market SaaS | 1K–100K records |
+| Niche tools, consulting, standalone utilities | < 1K records |
 
 ### Research Output (internal — not shown to user yet)
 
@@ -55,70 +98,52 @@ Compile findings into these variables for use in Round 2:
 - `detected_deployment_model`: SaaS / Self-hosted / Hybrid / Unknown
 - `detected_business_purpose`: one-line description or Unknown
 - `detected_certifications`: list of found certifications or empty
+- `inferred_data_types`: list of likely data types based on product category
+- `inferred_data_volume`: < 1K / 1K–100K / 100K+
+- `inferred_integration_depth`: Deep / Moderate / Light / Standalone
 - `research_confidence`: High (multiple sources confirm) / Medium (single source) / Low (inferred) / None
 
-If research yields nothing useful (all Unknown), fall back to asking these in Round 2.
+If research yields nothing useful (all Unknown), fall back to asking in Round 2.
 
 ---
 
-## Round 2: Assessment Context (1 compound question)
+## Round 2: Review Findings (confirmation only)
 
-Present research findings and ask for user-known details in a **single question**.
+Present **all** research findings — both auto-detected and inferred — for the user to confirm or correct. Do NOT ask the user to fill in blanks; every field should already have a value.
 
 ### If research found results:
 
 Ask:
 > **Here's what I found about [Vendor Name]:**
 >
-> | Detail | Auto-detected | Source |
-> |--------|--------------|--------|
-> | Website | [detected_website] | [search or provided] |
-> | Product/Service | [detected_product] | [URL or "vendor website"] |
-> | Deployment Model | [detected_deployment_model] | [URL or "vendor website"] |
-> | Business Purpose | [detected_business_purpose] | [URL or "vendor website"] |
-> | Certifications | [detected_certifications] | [URL(s)] |
+> | Detail | Value | How determined |
+> |--------|-------|----------------|
+> | Website | [detected_website] | Auto-detected |
+> | Product/Service | [detected_product] | Auto-detected |
+> | Business Purpose | [detected_business_purpose] | Auto-detected |
+> | Deployment Model | [detected_deployment_model] | Auto-detected |
+> | Certifications | [detected_certifications] | Auto-detected |
+> | Data Types | [inferred_data_types] | Inferred from product category |
+> | Data Volume | [inferred_data_volume] | Inferred from product type |
+> | Integration Depth | [inferred_integration_depth] | Inferred from product capabilities |
 >
-> **Corrections?** If any of the above are wrong, let me know and I'll update them.
->
-> Now I need a few things only you would know:
->
-> 1. **Data types** this vendor will access (select all that apply):
->    - PHI (Protected Health Information)
->    - PCI (Payment Card Industry data)
->    - PII (names, emails, SSNs, etc.)
->    - Financial (financial records, banking info)
->    - Credentials (passwords, API keys, tokens)
->    - Business Confidential (trade secrets, contracts)
->    - Internal (internal comms, project data)
->    - Public (marketing content, public docs)
->
-> 2. **Data volume** — approximately how many records/individuals:
->    - Less than 1,000
->    - 1,000 – 100,000
->    - More than 100,000
->
-> 3. **Integration depth** — how will this connect to your systems?
->    - **Deep** — API/data integration, shared infrastructure, SSO + data sync
->    - **Moderate** — SSO, some API integration
->    - **Light** — SSO only or basic web access
->    - **Standalone** — no integration, independent tool
+> **Does this look right?** Let me know if anything needs correcting (e.g., "data types should include PCI" or "integration is actually standalone").
 
 ### If research found nothing:
 
-Ask the same question but replace the findings table with direct questions for the details that couldn't be auto-detected:
-> I wasn't able to find details for [Vendor Name] online. I'll need a few extra details from you:
+If the vendor cannot be found online at all, fall back to asking the user to provide the missing details:
+> I wasn't able to find information about [Vendor Name] online. I'll need you to fill in the basics:
 >
-> 1. **Website URL** — the vendor's website
-> 2. **Product/Service** — the specific product or service you're assessing
-> 3. **Deployment model**:
->    - SaaS / Cloud-hosted
->    - Self-hosted / On-premises
->    - Hybrid
+> 1. **Website URL**
+> 2. **Product/Service** — what specific product are you assessing?
+> 3. **Deployment model** — SaaS, Self-hosted, or Hybrid?
 > 4. **Business purpose** — what business function does this support?
->
-> 5-7. [same data types, volume, and integration depth questions as above]
+> 5. **Data types** — what data will this vendor access? (PHI, PCI, PII, Financial, Credentials, Business Confidential, Internal, Public)
+> 6. **Integration depth** — Deep, Moderate, Light, or Standalone?
 
-Parse all values from the response. Apply any corrections the user provides to the auto-detected values.
+This fallback should be rare — most commercial vendors have a web presence.
+
+Apply any corrections the user provides to the auto-detected/inferred values.
 
 ---
 
@@ -369,6 +394,6 @@ Present a summary of everything set up and recommend the next actions:
 
 | Scenario | Rounds | Details |
 |----------|:------:|---------|
-| **First assessment** | 4 | Vendor name/URL → AI research → Assessment context → Org profile → Tier confirmation |
-| **Subsequent assessments** | 3 | Vendor name/URL → AI research → Assessment context → Tier confirmation |
+| **First assessment** | 4 | Vendor name/URL → AI research → Review findings → Org profile → Tier confirmation |
+| **Subsequent assessments** | 3 | Vendor name/URL → AI research → Review findings → Tier confirmation |
 | **Previous wizard** | 13 | One question per field |
