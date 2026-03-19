@@ -42,6 +42,18 @@
       "source": "./plugins/ruby-conventions",
       "category": "development",
       "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/ruby-conventions"
+    },
+    {
+      "name": "vendor-risk-assessment",
+      "description": "Vendor Risk Assessment (VRA) plugin for cybersecurity consultants. Research vendors, verify evidence, score risks, and write reports following NIST, ISO 27001, SOC 2, SIG, CSA CCM, and FAIR methodologies.",
+      "version": "1.0.0",
+      "author": {
+        "name": "mrleeio",
+        "url": "https://github.com/mrleeio"
+      },
+      "source": "./plugins/vendor-risk-assessment",
+      "category": "security",
+      "homepage": "https://github.com/mrleeio/claude-plugins/tree/main/plugins/vendor-risk-assessment"
     }
   ]
 }
