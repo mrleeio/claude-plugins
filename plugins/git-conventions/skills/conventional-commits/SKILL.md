@@ -1,6 +1,6 @@
 ---
 name: conventional-commits
-description: Create git commits following Conventional Commits standard without AI attribution. Trigger phrases include "commit", "create a commit", "git commit", "commit changes". (user)
+description: Create git commits following Conventional Commits standard. Trigger phrases include "commit", "create a commit", "git commit", "commit changes". (user)
 ---
 
 # Conventional Commits
@@ -36,7 +36,6 @@ Conventional Commits is a specification for writing standardized commit messages
 1. Use imperative mood in description (`Add` not `Added`)
 2. Capitalize the description
 3. No period at end
-4. NEVER include AI/Claude attribution or Co-Authored-By tags
 
 ## Examples
 
@@ -55,16 +54,6 @@ Added user authentication
 
 # WRONG: Past tense (use imperative mood)
 feat: Added user authentication
-
-# WRONG: AI attribution — NEVER include these
-feat: Add user authentication
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-
-# WRONG: AI attribution in footer
-feat: Add login flow
-
-Generated with Claude Code
 
 # WRONG: Missing colon+space separator
 feat Add user authentication

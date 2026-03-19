@@ -1,6 +1,6 @@
 # Git Conventions Plugin
 
-Create git commits following the [Conventional Commits](https://www.conventionalcommits.org/) standard (v1.0.0) without AI attribution.
+Create git commits following the [Conventional Commits](https://www.conventionalcommits.org/) standard (v1.0.0).
 
 ## Installation
 
@@ -66,7 +66,6 @@ BREAKING CHANGE: The old API endpoints are no longer available.
 
 - Follows Conventional Commits v1.0.0 specification
 - Uses author info from your git config
-- No AI/Claude attribution in commits
 - Clean, professional commit history
 
 ## License

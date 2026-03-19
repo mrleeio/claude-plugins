@@ -1,6 +1,5 @@
 #!/bin/bash
 # PreToolUse hook: Validate git commit messages follow Conventional Commits format
-# Blocks commits with invalid message format and provides guidance
 
 # Fail-safe: ANY unhandled error exits 0 (allow)
 trap 'exit 0' ERR
@@ -44,21 +43,6 @@ fi
 # Skip if it's just git commit without -m (interactive or amend without message change)
 if ! echo "$command" | grep -qE '\s+-m\s|\s+--message'; then
   exit 0
-fi
-
-# Check for AI attribution in the raw command (catches HEREDOC style too)
-if echo "$command" | grep -qiE 'co-authored-by:.*claude|generated.*claude|claude.*code|anthropic'; then
-  cat >&2 << EOF
-BLOCKED: Commit message contains AI attribution
-
-Conventional commits in this project should NOT include:
-  - Co-Authored-By tags for AI/Claude
-  - "Generated with Claude Code" or similar
-  - References to AI assistance
-
-Please remove AI attribution from the commit message.
-EOF
-  exit 2
 fi
 
 # Extract commit message from -m "message" or -m 'message' or --message="message"
@@ -131,21 +115,6 @@ Rules:
   - Description is required
 
 See the full specification: skills/conventional-commits/references/specification.md
-EOF
-  exit 2
-fi
-
-# Check for AI attribution (which should be avoided)
-if echo "$message" | grep -qiE 'co-authored-by:.*claude|generated.*claude|claude.*code|anthropic'; then
-  cat >&2 << EOF
-BLOCKED: Commit message contains AI attribution
-
-Conventional commits in this project should NOT include:
-  - Co-Authored-By tags for AI/Claude
-  - "Generated with Claude Code" or similar
-  - References to AI assistance
-
-Please remove AI attribution from the commit message.
 EOF
   exit 2
 fi

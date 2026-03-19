@@ -33,12 +33,6 @@ For the complete specification, see `skills/conventional-commits/references/spec
 2. Capitalize the description
 3. No period at end of description
 
-**CRITICAL - No AI Attribution:**
-- NEVER add `Co-Authored-By` lines (not even for Claude/AI)
-- NEVER add "Generated with Claude Code" or similar
-- NEVER mention AI, Claude, or Anthropic anywhere in the commit
-- The commit message should contain ONLY the conventional commit format - nothing else
-
 ## Steps
 
 1. Run the context gathering commands above to understand current changes
